@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FC GN 피지컬 퍼포먼스 대시보드</title>
+<style>
+:root{
+  --bg:#f0f2f5;--card:#ffffff;--card2:#f8f9fb;--border:#d9dee7;
+  --text:#17202a;--muted:#5f6c7b;--accent:#0f766e;--accent2:#4f46e5;
+  --win:#0891b2;--draw:#d97706;--loss:#dc2626;
+  --danger:#dc2626;--caution:#d97706;--ok:#16a34a;--low:#2563eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif;font-size:14px;line-height:1.6}
+.site-header{padding:24px 24px 0;max-width:1320px;margin:0 auto}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.header-brand{display:flex;align-items:center;gap:12px}
+.crest{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.brand-text h1{font-size:clamp(1.1rem,2.5vw,1.55rem);font-weight:900;letter-spacing:-.02em}
+.brand-text .sub{font-size:.76rem;color:var(--muted);margin-top:2px}
+.header-kpis{display:flex;gap:8px;flex-wrap:wrap}
+.kp{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 13px;text-align:center}
+.kp .v{font-size:1.15rem;font-weight:900;color:var(--accent);display:block}
+.kp .l{font-size:.66rem;color:var(--muted)}
+.page{max-width:1320px;margin:0 auto;padding:0 24px 60px}
+.tabbar{display:flex;gap:0;padding:12px 0 0;border-bottom:1px solid var(--border);margin-bottom:22px;overflow-x:auto}
+.tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:9px 16px;font-size:.86rem;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;margin-bottom:-1px;white-space:nowrap}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.sec{margin-bottom:24px}
+.stitle{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.stitle::before{content:"▸ ";color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card h3{font-size:.88rem;font-weight:800;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* ROUND TIMELINE */
+.tl-scroll{overflow-x:auto;padding-bottom:6px}
+.tl{display:flex;gap:6px;min-width:700px}
+.mb{flex:1;min-width:68px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 7px;text-align:center}
+.mb.W{border-top:3px solid var(--win)}.mb.D{border-top:3px solid var(--draw)}.mb.L{border-top:3px solid var(--loss)}
+.mb-r{font-size:.6rem;color:var(--muted);font-weight:700}
+.mb-o{font-size:.68rem;font-weight:700;margin:3px 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-s{font-size:.95rem;font-weight:900}
+.mb-s.W{color:var(--win)}.mb-s.D{color:var(--draw)}.mb-s.L{color:var(--loss)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.kpi-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.kpi-card .kv{font-size:1.5rem;font-weight:900;display:block}
+.kpi-card .kl{font-size:.7rem;color:var(--muted);margin-top:2px}
+.kpi-card .kb{font-size:.68rem;margin-top:4px;padding:2px 7px;border-radius:4px;display:inline-block}
+.kb-ok{background:#dcfce7;color:#15803d}
+.kb-warn{background:#ffedd5;color:#c2410c}
+.kb-danger{background:#fee2e2;color:#b91c1c}
+
+/* PLAYER SELECTOR */
+.player-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.pl-btn{background:var(--card2);border:2px solid var(--border);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:.78rem;font-weight:700;color:var(--muted);transition:all .12s}
+.pl-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(15,118,110,.08)}
+.pl-btn .pos-badge{font-size:.62rem;padding:1px 5px;border-radius:3px;margin-left:4px;background:var(--card);color:var(--muted)}
+
+/* ACWR */
+.acwr-table{border-collapse:collapse;width:100%;font-size:.8rem}
+.acwr-table th{color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 10px;border-bottom:1px solid var(--border);text-align:center}
+.acwr-table th:first-child{text-align:left}
+.acwr-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center}
+.acwr-table td:first-child{text-align:left;font-weight:700}
+.acwr-bar-cell{width:120px}
+.acwr-bar-wrap{background:var(--card2);border-radius:3px;height:6px;position:relative}
+.acwr-bar{height:100%;border-radius:3px}
+.acwr-bar.ok{background:var(--ok)}
+.acwr-bar.caution{background:var(--caution)}
+.acwr-bar.danger{background:var(--danger)}
+.risk-badge{font-size:.68rem;font-weight:800;padding:2px 7px;border-radius:4px}
+.rb-ok{background:#dcfce7;color:#15803d}
+.rb-warn{background:#ffedd5;color:#c2410c}
+.rb-danger{background:#fee2e2;color:#b91c1c}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0}
+.lb-rank.r1{background:#fef9c3;color:#a16207}
+.lb-rank.r2{background:#f1f5f9;color:#475569}
+.lb-rank.r3{background:#fff7ed;color:#c2410c}
+.lb-rank.rx{background:var(--card2);color:var(--muted)}
+.lb-name{flex:1;font-size:.83rem;font-weight:700}
+.lb-pos{font-size:.66rem;padding:1px 5px;border-radius:3px;background:var(--card2);color:var(--muted)}
+.lb-bar-wrap{width:120px;background:var(--card2);border-radius:3px;height:6px}
+.lb-bar{height:100%;border-radius:3px;background:var(--accent)}
+.lb-val{font-size:.82rem;font-weight:900;color:var(--accent);width:70px;text-align:right}
+
+/* ZONE CHART */
+.zone-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.72rem}
+.zl-item{display:flex;align-items:center;gap:4px}
+.zl-dot{width:10px;height:10px;border-radius:2px}
+
+/* BENCHMARK NOTE */
+.bm-note{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 14px;font-size:.76rem;color:#3730a3;line-height:1.6;margin-top:10px}
+.bm-note strong{color:#312e81}
+
+/* INSIGHT CARDS */
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ins{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:12px}
+.ins .tag{font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:6px}
+.ins p{font-size:.8rem;color:var(--muted);line-height:1.6}
+.ins strong{color:var(--text)}
+.tag-ok{background:#dcfce7;color:#15803d}
+.tag-warn{background:#ffedd5;color:#c2410c}
+.tag-danger{background:#fee2e2;color:#b91c1c}
+.tag-key{background:#eef2ff;color:#4338ca}
+
+@media(max-width:700px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .header-kpis{display:none}
+  .tabbar{overflow-x:auto}
+}
+
+/* RESULT ANALYSIS */
+.res-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.res-card{border-radius:12px;padding:18px;border:2px solid var(--border)}
+.res-card.W{background:rgba(8,145,178,.06);border-color:var(--win)}
+.res-card.D{background:rgba(217,119,6,.06);border-color:var(--draw)}
+.res-card.L{background:rgba(220,38,38,.06);border-color:var(--loss)}
+.res-card h4{font-size:1rem;font-weight:900;margin-bottom:12px}
+.res-card h4.W{color:var(--win)}.res-card h4.D{color:var(--draw)}.res-card h4.L{color:var(--loss)}
+.res-metric{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.res-metric:last-child{border-bottom:none}
+.res-metric .rlbl{color:var(--muted)}
+.res-metric .rval{font-weight:900}
+/* PLAYER COMMENTS */
+.comment-section{margin-top:14px}
+.comment-list{display:flex;flex-direction:column;gap:8px}
+.comment-item{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:11px 14px;display:flex;gap:10px;align-items:flex-start}
+.comment-badge{font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.cb-danger{background:#fee2e2;color:#b91c1c}
+.cb-warn{background:#ffedd5;color:#c2410c}
+.cb-ok{background:#dcfce7;color:#15803d}
+.cb-info{background:#eef2ff;color:#4338ca}
+.comment-text{font-size:.8rem;color:var(--muted);line-height:1.6}
+.comment-text strong{color:var(--text)}
+@media(max-width:700px){.res-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="site-header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="crest">🏃</div>
+      <div class="brand-text">
+        <h1>FC GN 피지컬 퍼포먼스 대시보드</h1>
+        <div class="sub">GPS 기반 · 14라운드 · 부하관리 · HSR Ratio · ACWR · 속도구간 분석 · by TAEWOOK EOM</div>
+      </div>
+    </div>
+    <div class="header-kpis" id="header-kpis"></div>
+  </div>
+</div>
+<div class="page">
+  <div class="tabbar">
+    <button class="tab-btn active" onclick="switchTab('team')">📊 팀 개요</button>
+    <button class="tab-btn" onclick="switchTab('player')">🏃 선수 분석</button>
+    <button class="tab-btn" onclick="switchTab('load')">⚡ 부하 관리 (ACWR)</button>
+    <button class="tab-btn" onclick="switchTab('profile')">📐 피지컬 프로필</button>
+    <button class="tab-btn" onclick="switchTab('result')">🏆 승무패 분석</button>
+  </div>
+
+  <!-- TAB 1: 팀 개요 -->
+  <div id="pane-team" class="tab-pane active">
+    <div class="sec">
+      <div class="stitle">라운드별 경기 결과</div>
+      <div class="card"><div class="tl-scroll"><div class="tl" id="tl"></div></div></div>
+    </div>
+    <div id="team-kpis" class="kpi-grid"></div>
+    <div class="sec">
+      <div class="stitle">라운드별 팀 피지컬 지표 차트</div>
+      <div class="g2">
+        <div class="card"><h3>총 이동거리 (∑ 선발 기준)</h3>
+          <svg id="team-dist-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> K3 준프로 기준 선발 11명 합산 약 90–110km. 엘리트 프로 110–130km (Rampinini et al., 2007)</div>
+        </div>
+        <div class="card"><h3>HSR 거리 합계 (High Speed Running ≥21 km/h)</h3>
+          <svg id="team-hsr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> 90분 선수당 HSR 700–1,200m 권장. 팀 합산 8,000–14,000m (Bradley et al., 2009)</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="g2">
+        <div class="card"><h3>HSR Ratio % = HSR거리 / 총거리 × 100</h3>
+          <svg id="team-hsrr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> HSR Ratio 6–10% 권장. 높을수록 고강도 직선 움직임 비중 ↑. WF/FB 10%↑ 정상 (Di Salvo et al., 2007)</div>
+        </div>
+        <div class="card"><h3>Sprint 거리 합계 (≥25 km/h)</h3>
+          <svg id="team-spr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> 선수당 Sprint 거리 200–500m/90min. 팀 합산 2,000–5,000m (Dalen et al., 2016)</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="g2">
+        <div class="card"><h3>팀 최고 속도 (경기당 최대값)</h3>
+          <svg id="team-vmax-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> 엘리트 최고 속도 34+ km/h. K3 준프로 30–33km/h 권장. 권순호 33.5km/h 최고 기록</div>
+        </div>
+        <div class="card"><h3>중고강도 가속 횟수 합계</h3>
+          <svg id="team-acc-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+          <div class="bm-note"><strong>벤치마크</strong> 가속/감속은 신경근 부하 지표. 선수당 30–60회/게임. 과도한 감속은 근육 손상 위험 (Akenhead & Nassis, 2016)</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">팀 피지컬 인사이트</div>
+      <div class="ins-grid" id="team-insights"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 선수 분석 -->
+  <div id="pane-player" class="tab-pane">
+    <div class="sec">
+      <div class="stitle">선수 선택 (5경기 이상 출전)</div>
+      <div class="player-btns" id="player-btns"></div>
+    </div>
+    <div id="player-detail">
+      <div style="text-align:center;padding:40px;color:var(--muted)">위에서 선수를 선택하면 개인 분석이 표시됩니다.</div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 부하 관리 (ACWR) -->
+  <div id="pane-load" class="tab-pane">
+    <div class="sec">
+      <div class="stitle">ACWR — 급성:만성 부하 비율 (Acute:Chronic Workload Ratio)</div>
+      <div class="bm-note" style="margin-bottom:16px">
+        <strong>ACWR 해석 (Gabbett, 2016; Hulin et al., 2016)</strong><br>
+        🟢 <strong>0.8–1.3</strong> 최적 구간 — 부상 위험 최저, 퍼포먼스 최고<br>
+        🟡 <strong>1.3–1.5</strong> 주의 구간 — 급성 부하가 만성보다 높음, 모니터링 필요<br>
+        🔴 <strong>1.5 초과</strong> 위험 구간 — 과부하. 부상 위험 2–4배 증가<br>
+        ⚪ <strong>0.8 미만</strong> 저부하 — 언더트레이닝, 컨디션 저하 가능성<br>
+        <em>계산 방식: Acute = 직전 1경기 총거리, Chronic = 직전 4경기 평균. 경기 수 부족 시 가용 데이터 평균 사용.</em>
+      </div>
+      <div class="card">
+        <table class="acwr-table" id="acwr-table"></table>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">선수별 최신 라운드 부하 비교</div>
+      <div class="card">
+        <h3>16R 기준 선수별 이동거리 & ACWR</h3>
+        <svg id="load-chart" viewBox="0 0 800 320" style="width:100%;display:block"></svg>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">부하 관련 인사이트</div>
+      <div class="ins-grid" id="load-insights"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 피지컬 프로필 -->
+  <div id="pane-profile" class="tab-pane">
+    <div class="sec">
+      <div class="stitle">포지션별 평균 피지컬 레이더</div>
+      <div class="card">
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+          <svg id="pos-radar" viewBox="0 0 400 330" style="width:100%;max-width:420px;display:block"></svg>
+          <div style="flex:1;min-width:220px" id="pos-radar-legend"></div>
+        </div>
+        <div class="bm-note">포지션별 정규화된 피지컬 프로필 (총거리·HSR비율·Sprint비율·가속·최고속도·분당거리). 같은 출전시간 기준 정규화.</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">속도 구간 분포 — 포지션별</div>
+      <div class="card">
+        <h3>5개 속도 구간 비율 (Z1 저강도 → Z5 스프린트)</h3>
+        <svg id="zone-chart" viewBox="0 0 800 280" style="width:100%;display:block"></svg>
+        <div class="zone-legend" id="zone-legend"></div>
+        <div class="bm-note"><strong>속도 구간 기준</strong> Z1 ≤7km/h (걷기) · Z2 7–14 (조깅) · Z3 14–21 (달리기) · Z4 21–25 (HSR) · Z5 ≥25 (스프린트). Z4+Z5 비율이 고강도 비중 핵심 지표.</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">시즌 기록 리더보드</div>
+      <div class="g2">
+        <div class="card">
+          <h3>🏆 최고 속도 Top 10 (단일 경기)</h3>
+          <div id="lb-vmax"></div>
+        </div>
+        <div class="card">
+          <h3>🏃 HSR Ratio Top 10 (90분↑ 경기만)</h3>
+          <div id="lb-hsrr"></div>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:14px">
+        <div class="card">
+          <h3>⚡ Sprint 거리 Top 10 (단일 경기)</h3>
+          <div id="lb-spr"></div>
+        </div>
+        <div class="card">
+          <h3>📏 총 이동거리 Top 10 (단일 경기)</h3>
+          <div id="lb-dist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: 승무패 분석 -->
+  <div id="pane-result" class="tab-pane">
+    <div class="sec">
+      <div class="stitle">승무패별 평균 피지컬 비교</div>
+      <div class="res-cards" id="result-cards"></div>
+    </div>
+    <div class="sec">
+      <div class="stitle">지표별 승무패 비교 차트</div>
+      <div class="g2">
+        <div class="card"><h3>팀 총 이동거리 평균 (km)</h3>
+          <svg id="res-dist-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+        </div>
+        <div class="card"><h3>팀 HSR 거리 평균 (m)</h3>
+          <svg id="res-hsr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:14px">
+        <div class="card"><h3>팀 Sprint 거리 평균 (m)</h3>
+          <svg id="res-spr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+        </div>
+        <div class="card"><h3>HSR Ratio 평균 (%)</h3>
+          <svg id="res-hsrr-chart" viewBox="0 0 460 200" style="width:100%;display:block"></svg>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">라운드별 이동거리 & 결과 분포</div>
+      <div class="card">
+        <h3>경기별 팀 총 이동거리 (선발 기준, 결과별 색상)</h3>
+        <svg id="res-scatter" viewBox="0 0 800 300" style="width:100%;display:block"></svg>
+        <div class="bm-note" style="margin-top:8px">🔵 승리 · 🟠 무승부 · 🔴 패배</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">승무패 피지컬 인사이트</div>
+      <div class="ins-grid" id="result-insights"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAW = [{"r":"1R","opp":"울산시민","result":"L","sc":"0-2","players":[{"name":"김믿음","no":"3","pos":"CB","min":13.4,"dist":1338.0,"dpm":100.2,"hsr":454.0,"hsr_n":10,"hsr_r":33.9,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":6,"dec":0,"vmax":24.1,"hacc":0.0,"hdec":0.0,"z1":263.0,"z2":227.0,"z3":399.0,"z4":449.0,"z5":0.0},{"name":"송영민","no":"6","pos":"CB","min":50.5,"dist":6086.0,"dpm":120.5,"hsr":335.0,"hsr_n":26,"hsr_r":5.5,"spr":66.0,"spr_n":5,"spr_r":1.1,"acc":17,"dec":31,"vmax":30.3,"hacc":3.4,"hdec":10.0,"z1":1998.0,"z2":2574.0,"z3":1189.0,"z4":265.0,"z5":60.0},{"name":"조건규","no":"9","pos":"CF","min":90.7,"dist":8943.0,"dpm":98.6,"hsr":557.0,"hsr_n":36,"hsr_r":6.2,"spr":106.0,"spr_n":9,"spr_r":1.2,"acc":65,"dec":48,"vmax":32.4,"hacc":12.5,"hdec":17.5,"z1":3728.0,"z2":3329.0,"z3":1322.0,"z4":460.0,"z5":104.0},{"name":"박하빈","no":"10","pos":"CM","min":103.9,"dist":12855.0,"dpm":123.8,"hsr":568.0,"hsr_n":41,"hsr_r":4.4,"spr":48.0,"spr_n":5,"spr_r":0.4,"acc":23,"dec":44,"vmax":26.5,"hacc":1.4,"hdec":18.6,"z1":3768.0,"z2":5970.0,"z3":2542.0,"z4":530.0,"z5":46.0},{"name":"김원준","no":"11","pos":"WF","min":53.3,"dist":5985.0,"dpm":112.2,"hsr":574.0,"hsr_n":39,"hsr_r":9.6,"spr":59.0,"spr_n":6,"spr_r":1.0,"acc":41,"dec":50,"vmax":29.0,"hacc":4.4,"hdec":26.1,"z1":2183.0,"z2":2189.0,"z3":1039.0,"z4":516.0,"z5":59.0},{"name":"구승훈","no":"14","pos":"CM","min":13.4,"dist":1320.0,"dpm":98.9,"hsr":476.0,"hsr_n":10,"hsr_r":36.1,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":7,"dec":0,"vmax":23.9,"hacc":0.0,"hdec":0.0,"z1":232.0,"z2":196.0,"z3":422.0,"z4":469.0,"z5":0.0},{"name":"손정민","no":"17","pos":"CM","min":103.9,"dist":11507.0,"dpm":110.8,"hsr":715.0,"hsr_n":56,"hsr_r":6.2,"spr":103.0,"spr_n":10,"spr_r":0.9,"acc":32,"dec":43,"vmax":29.1,"hacc":3.8,"hdec":19.1,"z1":3997.0,"z2":4860.0,"z3":1952.0,"z4":599.0,"z5":99.0},{"name":"이주영","no":"20","pos":"CB","min":51.3,"dist":5609.0,"dpm":109.3,"hsr":210.0,"hsr_n":18,"hsr_r":3.7,"spr":10.0,"spr_n":1,"spr_r":0.2,"acc":24,"dec":33,"vmax":27.2,"hacc":2.8,"hdec":10.7,"z1":1793.0,"z2":2649.0,"z3":957.0,"z4":199.0,"z5":11.0},{"name":"이현규","no":"23","pos":"WF","min":50.5,"dist":5001.0,"dpm":99.0,"hsr":309.0,"hsr_n":21,"hsr_r":6.2,"spr":63.0,"spr_n":4,"spr_r":1.3,"acc":10,"dec":30,"vmax":30.4,"hacc":0.0,"hdec":12.4,"z1":1892.0,"z2":2031.0,"z3":774.0,"z4":242.0,"z5":62.0},{"name":"이성윤","no":"24","pos":"FB","min":103.9,"dist":11515.0,"dpm":110.9,"hsr":571.0,"hsr_n":37,"hsr_r":5.0,"spr":156.0,"spr_n":9,"spr_r":1.4,"acc":35,"dec":62,"vmax":32.7,"hacc":4.2,"hdec":32.6,"z1":4184.0,"z2":5043.0,"z3":1716.0,"z4":421.0,"z5":150.0},{"name":"권태영","no":"27","pos":"WF","min":103.9,"dist":11359.0,"dpm":109.4,"hsr":1072.0,"hsr_n":73,"hsr_r":9.4,"spr":186.0,"spr_n":13,"spr_r":1.6,"acc":72,"dec":93,"vmax":30.9,"hacc":4.6,"hdec":36.8,"z1":4125.0,"z2":3830.0,"z3":2345.0,"z4":862.0,"z5":197.0},{"name":"김성순","no":"31","pos":"CM","min":37.0,"dist":3795.0,"dpm":102.7,"hsr":825.0,"hsr_n":31,"hsr_r":21.7,"spr":51.0,"spr_n":5,"spr_r":1.4,"acc":11,"dec":14,"vmax":30.9,"hacc":1.3,"hdec":9.3,"z1":1102.0,"z2":1127.0,"z3":751.0,"z4":764.0,"z5":50.0},{"name":"김재봉","no":"34","pos":"CB","min":53.3,"dist":5021.0,"dpm":94.1,"hsr":180.0,"hsr_n":16,"hsr_r":3.6,"spr":19.0,"spr_n":2,"spr_r":0.4,"acc":11,"dec":8,"vmax":27.2,"hacc":0.0,"hdec":5.8,"z1":2231.0,"z2":1876.0,"z3":737.0,"z4":163.0,"z5":14.0},{"name":"최성민","no":"39","pos":"CF","min":13.4,"dist":1352.0,"dpm":101.3,"hsr":491.0,"hsr_n":10,"hsr_r":36.3,"spr":44.0,"spr_n":1,"spr_r":3.2,"acc":9,"dec":0,"vmax":30.9,"hacc":0.0,"hdec":0.0,"z1":278.0,"z2":228.0,"z3":364.0,"z4":439.0,"z5":44.0},{"name":"권순호","no":"40","pos":"WF","min":53.3,"dist":6206.0,"dpm":116.4,"hsr":551.0,"hsr_n":28,"hsr_r":8.9,"spr":185.0,"spr_n":9,"spr_r":3.0,"acc":19,"dec":41,"vmax":33.5,"hacc":4.9,"hdec":22.0,"z1":2134.0,"z2":2345.0,"z3":1187.0,"z4":362.0,"z5":177.0},{"name":"송태성","no":"77","pos":"CM","min":103.9,"dist":11074.0,"dpm":106.6,"hsr":594.0,"hsr_n":54,"hsr_r":5.4,"spr":57.0,"spr_n":4,"spr_r":0.5,"acc":45,"dec":59,"vmax":28.3,"hacc":2.3,"hdec":22.2,"z1":3844.0,"z2":4617.0,"z3":2024.0,"z4":536.0,"z5":55.0},{"name":"김훈민","no":"91","pos":"FB","min":81.5,"dist":9370.0,"dpm":115.0,"hsr":750.0,"hsr_n":51,"hsr_r":8.0,"spr":202.0,"spr_n":11,"spr_r":2.2,"acc":27,"dec":72,"vmax":33.0,"hacc":5.2,"hdec":33.7,"z1":2943.0,"z2":4035.0,"z3":1652.0,"z4":554.0,"z5":186.0},{"name":"김성현","no":"99","pos":"CF","min":26.5,"dist":2718.0,"dpm":102.6,"hsr":365.0,"hsr_n":16,"hsr_r":13.4,"spr":31.0,"spr_n":2,"spr_r":1.1,"acc":4,"dec":10,"vmax":28.2,"hacc":0.0,"hdec":5.1,"z1":817.0,"z2":976.0,"z3":566.0,"z4":328.0,"z5":32.0}]},{"r":"2R","opp":"포천시민","result":"D","sc":"0-0","players":[{"name":"송영민","no":"6","pos":"CB","min":125.6,"dist":4103.0,"dpm":32.7,"hsr":51.0,"hsr_n":4,"hsr_r":1.2,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":18,"dec":5,"vmax":22.5,"hacc":1.1,"hdec":0.0,"z1":2722.0,"z2":945.0,"z3":384.0,"z4":52.0,"z5":0.0},{"name":"조건규","no":"9","pos":"CF","min":50.5,"dist":5218.0,"dpm":103.3,"hsr":420.0,"hsr_n":26,"hsr_r":8.1,"spr":104.0,"spr_n":7,"spr_r":2.0,"acc":46,"dec":39,"vmax":28.5,"hacc":8.1,"hdec":16.1,"z1":1888.0,"z2":2180.0,"z3":728.0,"z4":321.0,"z5":101.0},{"name":"박하빈","no":"10","pos":"CM","min":98.8,"dist":11756.0,"dpm":119.0,"hsr":552.0,"hsr_n":47,"hsr_r":4.7,"spr":44.0,"spr_n":3,"spr_r":0.4,"acc":25,"dec":51,"vmax":28.4,"hacc":3.8,"hdec":16.9,"z1":3485.0,"z2":5439.0,"z3":2286.0,"z4":500.0,"z5":44.0},{"name":"김원준","no":"11","pos":"WF","min":89.1,"dist":9873.0,"dpm":110.8,"hsr":1132.0,"hsr_n":73,"hsr_r":11.5,"spr":312.0,"spr_n":19,"spr_r":3.2,"acc":76,"dec":82,"vmax":31.1,"hacc":11.8,"hdec":25.6,"z1":3940.0,"z2":3236.0,"z3":1554.0,"z4":829.0,"z5":313.0},{"name":"구승훈","no":"14","pos":"CM","min":48.3,"dist":5812.0,"dpm":120.4,"hsr":428.0,"hsr_n":33,"hsr_r":7.4,"spr":64.0,"spr_n":5,"spr_r":1.1,"acc":15,"dec":31,"vmax":30.2,"hacc":5.1,"hdec":14.8,"z1":2057.0,"z2":2340.0,"z3":991.0,"z4":361.0,"z5":64.0},{"name":"손정민","no":"17","pos":"CM","min":98.8,"dist":10830.0,"dpm":109.6,"hsr":912.0,"hsr_n":56,"hsr_r":8.4,"spr":201.0,"spr_n":15,"spr_r":1.9,"acc":42,"dec":46,"vmax":31.0,"hacc":10.8,"hdec":24.3,"z1":4011.0,"z2":4326.0,"z3":1608.0,"z4":691.0,"z5":196.0},{"name":"이주영","no":"20","pos":"CB","min":98.8,"dist":10339.0,"dpm":104.7,"hsr":438.0,"hsr_n":34,"hsr_r":4.2,"spr":62.0,"spr_n":3,"spr_r":0.6,"acc":35,"dec":44,"vmax":29.7,"hacc":2.1,"hdec":9.4,"z1":3902.0,"z2":4474.0,"z3":1532.0,"z4":368.0,"z5":63.0},{"name":"이현규","no":"23","pos":"WF","min":21.3,"dist":2273.0,"dpm":107.0,"hsr":226.0,"hsr_n":16,"hsr_r":9.9,"spr":30.0,"spr_n":3,"spr_r":1.3,"acc":5,"dec":22,"vmax":38.7,"hacc":11.3,"hdec":12.7,"z1":717.0,"z2":929.0,"z3":407.0,"z4":190.0,"z5":30.0},{"name":"권태영","no":"27","pos":"WF","min":75.6,"dist":8278.0,"dpm":109.5,"hsr":1015.0,"hsr_n":54,"hsr_r":12.3,"spr":350.0,"spr_n":14,"spr_r":4.2,"acc":71,"dec":74,"vmax":31.6,"hacc":13.3,"hdec":29.3,"z1":3186.0,"z2":2792.0,"z3":1272.0,"z4":681.0,"z5":347.0},{"name":"김성순","no":"31","pos":"CM","min":50.5,"dist":6290.0,"dpm":124.5,"hsr":542.0,"hsr_n":35,"hsr_r":8.6,"spr":10.0,"spr_n":1,"spr_r":0.2,"acc":17,"dec":43,"vmax":26.4,"hacc":3.5,"hdec":12.9,"z1":1825.0,"z2":2434.0,"z3":1491.0,"z4":529.0,"z5":10.0},{"name":"김재봉","no":"34","pos":"CB","min":76.7,"dist":7443.0,"dpm":97.0,"hsr":248.0,"hsr_n":19,"hsr_r":3.3,"spr":44.0,"spr_n":2,"spr_r":0.6,"acc":24,"dec":22,"vmax":29.1,"hacc":1.1,"hdec":5.7,"z1":3403.0,"z2":2949.0,"z3":836.0,"z4":209.0,"z5":46.0},{"name":"최성민","no":"39","pos":"CF","min":8.3,"dist":1031.0,"dpm":124.5,"hsr":145.0,"hsr_n":8,"hsr_r":14.0,"spr":63.0,"spr_n":3,"spr_r":6.1,"acc":6,"dec":6,"vmax":28.8,"hacc":0.0,"hdec":2.6,"z1":255.0,"z2":354.0,"z3":273.0,"z4":90.0,"z5":60.0},{"name":"송태성","no":"77","pos":"CM","min":98.8,"dist":9760.0,"dpm":98.8,"hsr":767.0,"hsr_n":47,"hsr_r":7.9,"spr":201.0,"spr_n":13,"spr_r":2.1,"acc":44,"dec":54,"vmax":29.7,"hacc":6.7,"hdec":16.7,"z1":4244.0,"z2":3221.0,"z3":1526.0,"z4":571.0,"z5":198.0},{"name":"김훈민","no":"91","pos":"FB","min":98.8,"dist":10329.0,"dpm":104.6,"hsr":756.0,"hsr_n":53,"hsr_r":7.3,"spr":84.0,"spr_n":7,"spr_r":0.8,"acc":45,"dec":88,"vmax":28.6,"hacc":6.7,"hdec":45.5,"z1":3626.0,"z2":4425.0,"z3":1536.0,"z4":657.0,"z5":85.0},{"name":"김성현","no":"99","pos":"CF","min":48.3,"dist":5442.0,"dpm":112.7,"hsr":297.0,"hsr_n":20,"hsr_r":5.5,"spr":42.0,"spr_n":3,"spr_r":0.8,"acc":9,"dec":44,"vmax":31.4,"hacc":1.9,"hdec":26.4,"z1":1978.0,"z2":2364.0,"z3":807.0,"z4":247.0,"z5":47.0}]},{"r":"3R","opp":"당진시민","result":"W","sc":"2-1","players":[{"name":"송영민","no":"6","pos":"CB","min":13.7,"dist":1498.0,"dpm":109.2,"hsr":432.0,"hsr_n":11,"hsr_r":28.8,"spr":76.0,"spr_n":5,"spr_r":5.1,"acc":10,"dec":1,"vmax":27.0,"hacc":1.1,"hdec":0.0,"z1":477.0,"z2":411.0,"z3":180.0,"z4":366.0,"z5":64.0},{"name":"조건규","no":"9","pos":"CF","min":94.5,"dist":9773.0,"dpm":103.5,"hsr":810.0,"hsr_n":51,"hsr_r":8.3,"spr":246.0,"spr_n":17,"spr_r":2.5,"acc":53,"dec":57,"vmax":33.4,"hacc":8.5,"hdec":36.2,"z1":3953.0,"z2":3660.0,"z3":1344.0,"z4":578.0,"z5":238.0},{"name":"박하빈","no":"10","pos":"CM","min":98.7,"dist":12378.0,"dpm":125.4,"hsr":548.0,"hsr_n":44,"hsr_r":4.4,"spr":20.0,"spr_n":3,"spr_r":0.2,"acc":27,"dec":48,"vmax":26.3,"hacc":2.3,"hdec":14.8,"z1":3401.0,"z2":6089.0,"z3":2364.0,"z4":505.0,"z5":19.0},{"name":"김원준","no":"11","pos":"WF","min":98.7,"dist":11246.0,"dpm":113.9,"hsr":1458.0,"hsr_n":86,"hsr_r":13.0,"spr":300.0,"spr_n":17,"spr_r":2.7,"acc":76,"dec":81,"vmax":32.2,"hacc":23.4,"hdec":41.1,"z1":4282.0,"z2":3657.0,"z3":1847.0,"z4":1166.0,"z5":294.0},{"name":"손정민","no":"17","pos":"CM","min":98.7,"dist":11020.0,"dpm":111.6,"hsr":746.0,"hsr_n":47,"hsr_r":6.8,"spr":101.0,"spr_n":8,"spr_r":0.9,"acc":43,"dec":42,"vmax":29.0,"hacc":7.3,"hdec":21.4,"z1":3743.0,"z2":4741.0,"z3":1799.0,"z4":637.0,"z5":99.0},{"name":"이주영","no":"20","pos":"CB","min":21.8,"dist":2369.0,"dpm":108.8,"hsr":519.0,"hsr_n":13,"hsr_r":21.9,"spr":233.0,"spr_n":9,"spr_r":9.8,"acc":18,"dec":7,"vmax":27.7,"hacc":3.9,"hdec":1.1,"z1":755.0,"z2":754.0,"z3":348.0,"z4":332.0,"z5":181.0},{"name":"김길훈","no":"21","pos":"FB","min":4.4,"dist":642.0,"dpm":146.0,"hsr":371.0,"hsr_n":8,"hsr_r":57.7,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":6,"dec":0,"vmax":25.2,"hacc":0.0,"hdec":0.0,"z1":116.0,"z2":54.0,"z3":107.0,"z4":365.0,"z5":1.0},{"name":"이현규","no":"23","pos":"WF","min":4.4,"dist":601.0,"dpm":136.7,"hsr":318.0,"hsr_n":8,"hsr_r":52.8,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":4,"dec":0,"vmax":24.3,"hacc":0.0,"hdec":0.0,"z1":92.0,"z2":63.0,"z3":134.0,"z4":313.0,"z5":0.0},{"name":"권태영","no":"27","pos":"WF","min":50.2,"dist":5612.0,"dpm":111.9,"hsr":614.0,"hsr_n":38,"hsr_r":10.9,"spr":154.0,"spr_n":10,"spr_r":2.7,"acc":36,"dec":53,"vmax":30.9,"hacc":5.6,"hdec":28.3,"z1":2079.0,"z2":1820.0,"z3":1089.0,"z4":472.0,"z5":152.0},{"name":"김성순","no":"31","pos":"CM","min":48.6,"dist":5998.0,"dpm":123.5,"hsr":633.0,"hsr_n":39,"hsr_r":10.6,"spr":18.0,"spr_n":2,"spr_r":0.3,"acc":17,"dec":40,"vmax":27.1,"hacc":0.0,"hdec":13.8,"z1":1688.0,"z2":2377.0,"z3":1319.0,"z4":598.0,"z5":17.0},{"name":"김재봉","no":"34","pos":"CB","min":81.2,"dist":8062.0,"dpm":99.3,"hsr":315.0,"hsr_n":25,"hsr_r":3.9,"spr":32.0,"spr_n":4,"spr_r":0.4,"acc":17,"dec":18,"vmax":27.7,"hacc":1.6,"hdec":4.2,"z1":3611.0,"z2":3134.0,"z3":1004.0,"z4":282.0,"z5":31.0},{"name":"최성민","no":"39","pos":"CF","min":48.6,"dist":5381.0,"dpm":110.8,"hsr":520.0,"hsr_n":30,"hsr_r":9.7,"spr":175.0,"spr_n":9,"spr_r":3.3,"acc":35,"dec":42,"vmax":31.4,"hacc":6.2,"hdec":22.6,"z1":1926.0,"z2":1960.0,"z3":969.0,"z4":353.0,"z5":172.0},{"name":"송태성","no":"77","pos":"CM","min":98.7,"dist":10403.0,"dpm":105.4,"hsr":871.0,"hsr_n":44,"hsr_r":8.4,"spr":251.0,"spr_n":11,"spr_r":2.4,"acc":42,"dec":63,"vmax":31.0,"hacc":9.2,"hdec":31.4,"z1":3810.0,"z2":3934.0,"z3":1792.0,"z4":629.0,"z5":238.0},{"name":"김훈민","no":"91","pos":"FB","min":81.2,"dist":9570.0,"dpm":117.9,"hsr":727.0,"hsr_n":50,"hsr_r":7.6,"spr":164.0,"spr_n":10,"spr_r":1.7,"acc":36,"dec":89,"vmax":30.4,"hacc":5.2,"hdec":51.0,"z1":2834.0,"z2":4126.0,"z3":1888.0,"z4":560.0,"z5":163.0},{"name":"김성현","no":"99","pos":"CF","min":23.0,"dist":2746.0,"dpm":119.2,"hsr":526.0,"hsr_n":20,"hsr_r":19.1,"spr":14.0,"spr_n":1,"spr_r":0.5,"acc":10,"dec":12,"vmax":28.0,"hacc":1.4,"hdec":5.6,"z1":798.0,"z2":862.0,"z3":569.0,"z4":497.0,"z5":20.0}]},{"r":"4R","opp":"FC목포","result":"D","sc":"0-0","players":[{"name":"송영민","no":"6","pos":"CB","min":10.1,"dist":1389.0,"dpm":137.3,"hsr":470.0,"hsr_n":10,"hsr_r":33.8,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":3,"dec":0,"vmax":24.8,"hacc":0.0,"hdec":0.0,"z1":245.0,"z2":249.0,"z3":431.0,"z4":464.0,"z5":0.0},{"name":"조건규","no":"9","pos":"CF","min":82.5,"dist":8510.0,"dpm":103.1,"hsr":493.0,"hsr_n":35,"hsr_r":5.8,"spr":112.0,"spr_n":8,"spr_r":1.3,"acc":48,"dec":52,"vmax":31.9,"hacc":10.1,"hdec":11.6,"z1":3540.0,"z2":3090.0,"z3":1381.0,"z4":387.0,"z5":112.0},{"name":"박하빈","no":"10","pos":"CM","min":97.7,"dist":11830.0,"dpm":121.1,"hsr":398.0,"hsr_n":35,"hsr_r":3.4,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":31,"dec":46,"vmax":26.1,"hacc":0.9,"hdec":13.5,"z1":3500.0,"z2":5634.0,"z3":2303.0,"z4":390.0,"z5":3.0},{"name":"김원준","no":"11","pos":"WF","min":91.7,"dist":10192.0,"dpm":111.1,"hsr":939.0,"hsr_n":66,"hsr_r":9.2,"spr":201.0,"spr_n":13,"spr_r":2.0,"acc":64,"dec":71,"vmax":32.0,"hacc":8.5,"hdec":29.5,"z1":4092.0,"z2":3630.0,"z3":1536.0,"z4":735.0,"z5":200.0},{"name":"손정민","no":"17","pos":"CM","min":81.9,"dist":8973.0,"dpm":109.6,"hsr":678.0,"hsr_n":40,"hsr_r":7.6,"spr":127.0,"spr_n":10,"spr_r":1.4,"acc":29,"dec":31,"vmax":29.3,"hacc":0.0,"hdec":7.7,"z1":3223.0,"z2":3718.0,"z3":1371.0,"z4":550.0,"z5":111.0},{"name":"송준민","no":"18","pos":"WF","min":51.9,"dist":6042.0,"dpm":116.5,"hsr":653.0,"hsr_n":39,"hsr_r":10.8,"spr":97.0,"spr_n":5,"spr_r":1.6,"acc":42,"dec":62,"vmax":30.8,"hacc":7.4,"hdec":34.5,"z1":1831.0,"z2":2464.0,"z3":1093.0,"z4":548.0,"z5":105.0},{"name":"이주영","no":"20","pos":"CB","min":22.3,"dist":2613.0,"dpm":117.5,"hsr":588.0,"hsr_n":16,"hsr_r":22.5,"spr":24.0,"spr_n":2,"spr_r":0.9,"acc":17,"dec":10,"vmax":27.0,"hacc":0.0,"hdec":2.9,"z1":576.0,"z2":697.0,"z3":759.0,"z4":558.0,"z5":23.0},{"name":"김길훈","no":"21","pos":"FB","min":17.4,"dist":2189.0,"dpm":126.2,"hsr":576.0,"hsr_n":18,"hsr_r":26.3,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":7,"dec":7,"vmax":25.3,"hacc":1.0,"hdec":2.3,"z1":433.0,"z2":434.0,"z3":753.0,"z4":567.0,"z5":1.0},{"name":"이현규","no":"23","pos":"WF","min":17.4,"dist":1797.0,"dpm":103.6,"hsr":121.0,"hsr_n":8,"hsr_r":6.7,"spr":11.0,"spr_n":1,"spr_r":0.6,"acc":2,"dec":7,"vmax":26.3,"hacc":0.0,"hdec":0.0,"z1":573.0,"z2":724.0,"z3":390.0,"z4":101.0,"z5":9.0},{"name":"이성윤","no":"24","pos":"FB","min":97.7,"dist":10098.0,"dpm":103.3,"hsr":347.0,"hsr_n":30,"hsr_r":3.4,"spr":28.0,"spr_n":3,"spr_r":0.3,"acc":25,"dec":44,"vmax":27.7,"hacc":3.2,"hdec":16.8,"z1":4034.0,"z2":4347.0,"z3":1368.0,"z4":325.0,"z5":25.0},{"name":"권태영","no":"27","pos":"WF","min":45.9,"dist":5083.0,"dpm":110.8,"hsr":466.0,"hsr_n":33,"hsr_r":9.2,"spr":76.0,"spr_n":5,"spr_r":1.5,"acc":45,"dec":54,"vmax":31.6,"hacc":9.7,"hdec":28.4,"z1":1841.0,"z2":1920.0,"z3":854.0,"z4":389.0,"z5":79.0},{"name":"김성순","no":"31","pos":"CM","min":10.1,"dist":1383.0,"dpm":136.7,"hsr":552.0,"hsr_n":10,"hsr_r":39.9,"spr":136.0,"spr_n":5,"spr_r":9.8,"acc":1,"dec":0,"vmax":27.8,"hacc":0.0,"hdec":0.0,"z1":161.0,"z2":167.0,"z3":504.0,"z4":436.0,"z5":116.0},{"name":"김재봉","no":"34","pos":"CB","min":86.8,"dist":8528.0,"dpm":98.2,"hsr":218.0,"hsr_n":18,"hsr_r":2.6,"spr":14.0,"spr_n":2,"spr_r":0.2,"acc":25,"dec":21,"vmax":27.8,"hacc":3.1,"hdec":5.8,"z1":3752.0,"z2":3446.0,"z3":1115.0,"z4":202.0,"z5":13.0},{"name":"권순호","no":"40","pos":"WF","min":97.7,"dist":10269.0,"dpm":105.1,"hsr":644.0,"hsr_n":48,"hsr_r":6.3,"spr":118.0,"spr_n":7,"spr_r":1.1,"acc":40,"dec":73,"vmax":32.6,"hacc":5.5,"hdec":36.0,"z1":4085.0,"z2":4038.0,"z3":1495.0,"z4":534.0,"z5":118.0},{"name":"송태성","no":"77","pos":"CM","min":97.7,"dist":10022.0,"dpm":102.6,"hsr":610.0,"hsr_n":45,"hsr_r":6.1,"spr":71.0,"spr_n":4,"spr_r":0.7,"acc":41,"dec":58,"vmax":29.6,"hacc":4.8,"hdec":15.1,"z1":3951.0,"z2":3748.0,"z3":1716.0,"z4":534.0,"z5":72.0},{"name":"김훈민","no":"91","pos":"FB","min":97.7,"dist":11449.0,"dpm":117.2,"hsr":908.0,"hsr_n":57,"hsr_r":7.9,"spr":108.0,"spr_n":8,"spr_r":0.9,"acc":48,"dec":110,"vmax":29.5,"hacc":8.0,"hdec":62.3,"z1":3424.0,"z2":4983.0,"z3":2138.0,"z4":801.0,"z5":103.0},{"name":"김성현","no":"99","pos":"CF","min":17.0,"dist":1749.0,"dpm":102.7,"hsr":128.0,"hsr_n":10,"hsr_r":7.3,"spr":26.0,"spr_n":2,"spr_r":1.5,"acc":4,"dec":10,"vmax":28.8,"hacc":1.1,"hdec":2.9,"z1":597.0,"z2":749.0,"z3":276.0,"z4":102.0,"z5":25.0}]},{"r":"5R","opp":"여주FC","result":"D","sc":"1-1","players":[{"name":"송영민","no":"6","pos":"CB","min":101.9,"dist":9209.0,"dpm":90.4,"hsr":540.0,"hsr_n":38,"hsr_r":5.9,"spr":76.0,"spr_n":4,"spr_r":0.8,"acc":30,"dec":37,"vmax":32.6,"hacc":3.4,"hdec":15.9,"z1":3814.0,"z2":3438.0,"z3":1416.0,"z4":464.0,"z5":77.0},{"name":"조건규","no":"9","pos":"CF","min":50.1,"dist":4451.0,"dpm":88.9,"hsr":263.0,"hsr_n":15,"hsr_r":5.9,"spr":66.0,"spr_n":6,"spr_r":1.5,"acc":25,"dec":17,"vmax":27.5,"hacc":5.2,"hdec":3.8,"z1":1874.0,"z2":1648.0,"z3":662.0,"z4":200.0,"z5":66.0},{"name":"박하빈","no":"10","pos":"CM","min":101.9,"dist":11195.0,"dpm":109.9,"hsr":845.0,"hsr_n":57,"hsr_r":7.5,"spr":44.0,"spr_n":3,"spr_r":0.4,"acc":32,"dec":43,"vmax":28.4,"hacc":4.9,"hdec":14.7,"z1":3518.0,"z2":4573.0,"z3":2274.0,"z4":785.0,"z5":46.0},{"name":"김원준","no":"11","pos":"WF","min":49.8,"dist":4887.0,"dpm":98.2,"hsr":543.0,"hsr_n":28,"hsr_r":11.1,"spr":184.0,"spr_n":10,"spr_r":3.8,"acc":23,"dec":22,"vmax":30.1,"hacc":4.7,"hdec":11.4,"z1":2101.0,"z2":1491.0,"z3":750.0,"z4":354.0,"z5":191.0},{"name":"구승훈","no":"14","pos":"CM","min":85.6,"dist":9342.0,"dpm":109.1,"hsr":943.0,"hsr_n":58,"hsr_r":10.1,"spr":218.0,"spr_n":12,"spr_r":2.3,"acc":34,"dec":41,"vmax":32.0,"hacc":1.2,"hdec":18.3,"z1":3129.0,"z2":3562.0,"z3":1721.0,"z4":714.0,"z5":215.0},{"name":"손정민","no":"17","pos":"CM","min":50.1,"dist":4751.0,"dpm":94.9,"hsr":510.0,"hsr_n":25,"hsr_r":10.7,"spr":135.0,"spr_n":9,"spr_r":2.8,"acc":16,"dec":19,"vmax":30.7,"hacc":3.8,"hdec":13.3,"z1":1982.0,"z2":1574.0,"z3":692.0,"z4":369.0,"z5":134.0},{"name":"송준민","no":"18","pos":"WF","min":34.7,"dist":3449.0,"dpm":99.3,"hsr":514.0,"hsr_n":24,"hsr_r":14.9,"spr":187.0,"spr_n":11,"spr_r":5.4,"acc":24,"dec":15,"vmax":30.6,"hacc":7.4,"hdec":4.6,"z1":1324.0,"z2":1071.0,"z3":558.0,"z4":312.0,"z5":184.0},{"name":"심정용","no":"19","pos":"FB","min":22.1,"dist":2076.0,"dpm":94.0,"hsr":167.0,"hsr_n":6,"hsr_r":8.0,"spr":78.0,"spr_n":3,"spr_r":3.8,"acc":3,"dec":3,"vmax":30.3,"hacc":0.0,"hdec":0.0,"z1":862.0,"z2":659.0,"z3":396.0,"z4":84.0,"z5":76.0},{"name":"이주영","no":"20","pos":"CB","min":22.1,"dist":2005.0,"dpm":90.8,"hsr":166.0,"hsr_n":9,"hsr_r":8.3,"spr":54.0,"spr_n":2,"spr_r":2.7,"acc":3,"dec":3,"vmax":28.3,"hacc":0.0,"hdec":0.0,"z1":717.0,"z2":733.0,"z3":402.0,"z4":100.0,"z5":53.0},{"name":"김길훈","no":"21","pos":"FB","min":17.8,"dist":2064.0,"dpm":116.3,"hsr":328.0,"hsr_n":18,"hsr_r":15.9,"spr":75.0,"spr_n":3,"spr_r":3.6,"acc":10,"dec":10,"vmax":30.1,"hacc":2.9,"hdec":1.9,"z1":608.0,"z2":780.0,"z3":350.0,"z4":249.0,"z5":76.0},{"name":"이현규","no":"23","pos":"WF","min":91.4,"dist":8234.0,"dpm":90.1,"hsr":701.0,"hsr_n":43,"hsr_r":8.5,"spr":131.0,"spr_n":9,"spr_r":1.6,"acc":34,"dec":37,"vmax":30.3,"hacc":0.0,"hdec":15.3,"z1":3331.0,"z2":3016.0,"z3":1186.0,"z4":571.0,"z5":129.0},{"name":"이성윤","no":"24","pos":"FB","min":101.9,"dist":9829.0,"dpm":96.5,"hsr":835.0,"hsr_n":53,"hsr_r":8.5,"spr":244.0,"spr_n":16,"spr_r":2.5,"acc":30,"dec":72,"vmax":32.0,"hacc":1.3,"hdec":31.1,"z1":3972.0,"z2":3526.0,"z3":1506.0,"z4":584.0,"z5":242.0},{"name":"김성순","no":"31","pos":"CM","min":70.1,"dist":7297.0,"dpm":104.0,"hsr":900.0,"hsr_n":45,"hsr_r":12.3,"spr":339.0,"spr_n":16,"spr_r":4.6,"acc":22,"dec":49,"vmax":30.5,"hacc":2.0,"hdec":18.4,"z1":2507.0,"z2":2456.0,"z3":1432.0,"z4":557.0,"z5":344.0},{"name":"김재봉","no":"34","pos":"CB","min":101.9,"dist":9172.0,"dpm":90.0,"hsr":476.0,"hsr_n":33,"hsr_r":5.2,"spr":94.0,"spr_n":6,"spr_r":1.0,"acc":26,"dec":24,"vmax":31.3,"hacc":4.4,"hdec":8.6,"z1":4168.0,"z2":3401.0,"z3":1140.0,"z4":372.0,"z5":90.0},{"name":"황정욱","no":"37","pos":"CB","min":22.1,"dist":2000.0,"dpm":90.6,"hsr":177.0,"hsr_n":9,"hsr_r":8.9,"spr":28.0,"spr_n":2,"spr_r":1.4,"acc":1,"dec":1,"vmax":27.8,"hacc":0.0,"hdec":0.0,"z1":803.0,"z2":682.0,"z3":358.0,"z4":130.0,"z5":27.0},{"name":"송태성","no":"77","pos":"CM","min":69.8,"dist":6569.0,"dpm":94.1,"hsr":602.0,"hsr_n":28,"hsr_r":9.2,"spr":147.0,"spr_n":12,"spr_r":2.2,"acc":28,"dec":41,"vmax":30.9,"hacc":6.6,"hdec":21.9,"z1":2741.0,"z2":2208.0,"z3":1029.0,"z4":447.0,"z5":143.0},{"name":"김훈민","no":"91","pos":"FB","min":101.9,"dist":9703.0,"dpm":95.2,"hsr":744.0,"hsr_n":47,"hsr_r":7.7,"spr":154.0,"spr_n":13,"spr_r":1.6,"acc":43,"dec":68,"vmax":31.3,"hacc":8.1,"hdec":34.1,"z1":3591.0,"z2":3783.0,"z3":1592.0,"z4":587.0,"z5":150.0},{"name":"김성현","no":"99","pos":"CF","min":70.4,"dist":6757.0,"dpm":95.9,"hsr":599.0,"hsr_n":32,"hsr_r":8.9,"spr":185.0,"spr_n":11,"spr_r":2.7,"acc":14,"dec":30,"vmax":30.0,"hacc":0.0,"hdec":13.2,"z1":2745.0,"z2":2612.0,"z3":797.0,"z4":426.0,"z5":177.0}]},{"r":"6R","opp":"춘천시민","result":"L","sc":"0-2","players":[{"name":"송영민","no":"6","pos":"CB","min":17.8,"dist":1640.0,"dpm":92.3,"hsr":56.0,"hsr_n":4,"hsr_r":3.4,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":10,"dec":7,"vmax":25.7,"hacc":1.1,"hdec":2.5,"z1":827.0,"z2":545.0,"z3":212.0,"z4":55.0,"z5":1.0},{"name":"조건규","no":"9","pos":"CF","min":63.3,"dist":6173.0,"dpm":97.6,"hsr":353.0,"hsr_n":29,"hsr_r":5.7,"spr":65.0,"spr_n":5,"spr_r":1.1,"acc":31,"dec":20,"vmax":31.3,"hacc":4.1,"hdec":5.5,"z1":2670.0,"z2":2271.0,"z3":877.0,"z4":290.0,"z5":65.0},{"name":"김원준","no":"11","pos":"WF","min":63.5,"dist":7342.0,"dpm":115.7,"hsr":721.0,"hsr_n":46,"hsr_r":9.8,"spr":113.0,"spr_n":12,"spr_r":1.5,"acc":58,"dec":52,"vmax":28.7,"hacc":10.6,"hdec":16.9,"z1":2644.0,"z2":2649.0,"z3":1322.0,"z4":617.0,"z5":110.0},{"name":"손정민","no":"17","pos":"CM","min":101.0,"dist":10729.0,"dpm":106.2,"hsr":556.0,"hsr_n":32,"hsr_r":5.2,"spr":101.0,"spr_n":6,"spr_r":0.9,"acc":33,"dec":30,"vmax":31.0,"hacc":9.7,"hdec":14.2,"z1":3709.0,"z2":4908.0,"z3":1575.0,"z4":431.0,"z5":105.0},{"name":"심정용","no":"19","pos":"FB","min":66.7,"dist":2985.0,"dpm":44.8,"hsr":166.0,"hsr_n":6,"hsr_r":5.6,"spr":94.0,"spr_n":4,"spr_r":3.1,"acc":6,"dec":0,"vmax":29.1,"hacc":0.0,"hdec":0.0,"z1":2074.0,"z2":572.0,"z3":173.0,"z4":76.0,"z5":90.0},{"name":"이주영","no":"20","pos":"CB","min":66.7,"dist":3039.0,"dpm":45.6,"hsr":141.0,"hsr_n":4,"hsr_r":4.6,"spr":50.0,"spr_n":2,"spr_r":1.6,"acc":3,"dec":0,"vmax":28.4,"hacc":0.0,"hdec":0.0,"z1":1901.0,"z2":830.0,"z3":171.0,"z4":93.0,"z5":45.0},{"name":"김길훈","no":"21","pos":"FB","min":66.7,"dist":2659.0,"dpm":39.9,"hsr":76.0,"hsr_n":5,"hsr_r":2.9,"spr":4.0,"spr_n":1,"spr_r":0.2,"acc":2,"dec":1,"vmax":25.5,"hacc":1.6,"hdec":0.0,"z1":1859.0,"z2":637.0,"z3":90.0,"z4":72.0,"z5":1.0},{"name":"이현규","no":"23","pos":"WF","min":63.3,"dist":5933.0,"dpm":93.8,"hsr":350.0,"hsr_n":27,"hsr_r":5.9,"spr":70.0,"spr_n":5,"spr_r":1.2,"acc":24,"dec":30,"vmax":29.2,"hacc":2.4,"hdec":11.4,"z1":2563.0,"z2":2244.0,"z3":779.0,"z4":284.0,"z5":63.0},{"name":"이성윤","no":"24","pos":"FB","min":101.0,"dist":10702.0,"dpm":106.0,"hsr":712.0,"hsr_n":45,"hsr_r":6.7,"spr":264.0,"spr_n":16,"spr_r":2.5,"acc":33,"dec":58,"vmax":32.9,"hacc":3.2,"hdec":27.1,"z1":4448.0,"z2":3919.0,"z3":1622.0,"z4":451.0,"z5":262.0},{"name":"권태영","no":"27","pos":"WF","min":39.7,"dist":3906.0,"dpm":98.3,"hsr":220.0,"hsr_n":17,"hsr_r":5.6,"spr":59.0,"spr_n":4,"spr_r":1.5,"acc":13,"dec":34,"vmax":30.4,"hacc":2.2,"hdec":24.2,"z1":1670.0,"z2":1327.0,"z3":687.0,"z4":165.0,"z5":57.0},{"name":"김성순","no":"31","pos":"CM","min":86.0,"dist":9957.0,"dpm":115.8,"hsr":1106.0,"hsr_n":68,"hsr_r":11.1,"spr":245.0,"spr_n":13,"spr_r":2.5,"acc":28,"dec":52,"vmax":31.9,"hacc":1.5,"hdec":32.2,"z1":3242.0,"z2":3730.0,"z3":1893.0,"z4":848.0,"z5":244.0},{"name":"김재봉","no":"34","pos":"CB","min":101.0,"dist":9045.0,"dpm":89.6,"hsr":290.0,"hsr_n":21,"hsr_r":3.2,"spr":50.0,"spr_n":4,"spr_r":0.5,"acc":20,"dec":22,"vmax":28.8,"hacc":3.5,"hdec":3.0,"z1":4645.0,"z2":3050.0,"z3":1067.0,"z4":230.0,"z5":52.0},{"name":"권순호","no":"40","pos":"WF","min":39.3,"dist":4268.0,"dpm":108.6,"hsr":369.0,"hsr_n":24,"hsr_r":8.6,"spr":94.0,"spr_n":6,"spr_r":2.2,"acc":12,"dec":24,"vmax":31.7,"hacc":1.3,"hdec":17.1,"z1":1683.0,"z2":1622.0,"z3":593.0,"z4":274.0,"z5":96.0},{"name":"송태성","no":"77","pos":"CM","min":101.0,"dist":9370.0,"dpm":92.8,"hsr":656.0,"hsr_n":42,"hsr_r":7.0,"spr":147.0,"spr_n":10,"spr_r":1.6,"acc":26,"dec":45,"vmax":29.3,"hacc":3.7,"hdec":21.6,"z1":4321.0,"z2":3120.0,"z3":1277.0,"z4":508.0,"z5":145.0},{"name":"김훈민","no":"91","pos":"FB","min":51.7,"dist":6085.0,"dpm":117.7,"hsr":341.0,"hsr_n":31,"hsr_r":5.6,"spr":14.0,"spr_n":2,"spr_r":0.2,"acc":11,"dec":40,"vmax":27.0,"hacc":2.1,"hdec":12.8,"z1":1899.0,"z2":2697.0,"z3":1160.0,"z4":314.0,"z5":14.0},{"name":"김성현","no":"99","pos":"CF","min":39.5,"dist":4023.0,"dpm":101.8,"hsr":301.0,"hsr_n":19,"hsr_r":7.5,"spr":37.0,"spr_n":3,"spr_r":0.9,"acc":10,"dec":21,"vmax":28.0,"hacc":1.5,"hdec":8.9,"z1":1761.0,"z2":1445.0,"z3":514.0,"z4":269.0,"z5":34.0}]},{"r":"7R","opp":"전북N","result":"W","sc":"2-0","players":[{"name":"송영민","no":"6","pos":"CB","min":102.9,"dist":10406.0,"dpm":101.1,"hsr":471.0,"hsr_n":32,"hsr_r":4.5,"spr":114.0,"spr_n":10,"spr_r":1.1,"acc":20,"dec":42,"vmax":31.2,"hacc":3.7,"hdec":16.4,"z1":4166.0,"z2":4577.0,"z3":1180.0,"z4":369.0,"z5":114.0},{"name":"김원준","no":"11","pos":"WF","min":89.7,"dist":10431.0,"dpm":116.4,"hsr":1170.0,"hsr_n":73,"hsr_r":11.2,"spr":355.0,"spr_n":20,"spr_r":3.4,"acc":77,"dec":61,"vmax":32.7,"hacc":15.6,"hdec":37.0,"z1":3862.0,"z2":3701.0,"z3":1696.0,"z4":805.0,"z5":366.0},{"name":"구승훈","no":"14","pos":"CM","min":102.9,"dist":12678.0,"dpm":123.2,"hsr":753.0,"hsr_n":45,"hsr_r":5.9,"spr":225.0,"spr_n":9,"spr_r":1.8,"acc":38,"dec":34,"vmax":33.2,"hacc":4.7,"hdec":10.8,"z1":3977.0,"z2":5801.0,"z3":2166.0,"z4":507.0,"z5":227.0},{"name":"손정민","no":"17","pos":"CM","min":102.9,"dist":11699.0,"dpm":113.7,"hsr":469.0,"hsr_n":33,"hsr_r":4.0,"spr":105.0,"spr_n":6,"spr_r":0.9,"acc":29,"dec":34,"vmax":30.1,"hacc":6.2,"hdec":12.7,"z1":3962.0,"z2":5541.0,"z3":1734.0,"z4":359.0,"z5":102.0},{"name":"심정용","no":"19","pos":"FB","min":10.5,"dist":1222.0,"dpm":116.6,"hsr":136.0,"hsr_n":8,"hsr_r":11.1,"spr":26.0,"spr_n":2,"spr_r":2.1,"acc":8,"dec":7,"vmax":26.6,"hacc":2.0,"hdec":3.2,"z1":367.0,"z2":513.0,"z3":210.0,"z4":110.0,"z5":23.0},{"name":"이주영","no":"20","pos":"CB","min":9.7,"dist":974.0,"dpm":100.9,"hsr":18.0,"hsr_n":2,"hsr_r":1.9,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":1,"dec":1,"vmax":22.8,"hacc":0.0,"hdec":0.0,"z1":404.0,"z2":418.0,"z3":133.0,"z4":18.0,"z5":0.0},{"name":"김길훈","no":"21","pos":"FB","min":125.6,"dist":3230.0,"dpm":25.7,"hsr":86.0,"hsr_n":6,"hsr_r":2.7,"spr":6.0,"spr_n":1,"spr_r":0.2,"acc":13,"dec":3,"vmax":26.3,"hacc":0.0,"hdec":0.0,"z1":2374.0,"z2":633.0,"z3":140.0,"z4":77.0,"z5":6.0},{"name":"이성윤","no":"24","pos":"FB","min":102.9,"dist":11294.0,"dpm":109.8,"hsr":1000.0,"hsr_n":60,"hsr_r":8.9,"spr":379.0,"spr_n":16,"spr_r":3.4,"acc":41,"dec":78,"vmax":33.4,"hacc":9.6,"hdec":41.1,"z1":4586.0,"z2":4273.0,"z3":1418.0,"z4":646.0,"z5":370.0},{"name":"권태영","no":"27","pos":"WF","min":13.8,"dist":1482.0,"dpm":107.6,"hsr":186.0,"hsr_n":10,"hsr_r":12.6,"spr":27.0,"spr_n":2,"spr_r":1.8,"acc":9,"dec":10,"vmax":27.1,"hacc":2.8,"hdec":4.8,"z1":450.0,"z2":620.0,"z3":224.0,"z4":161.0,"z5":26.0},{"name":"김성순","no":"31","pos":"CM","min":90.5,"dist":11167.0,"dpm":123.4,"hsr":1053.0,"hsr_n":69,"hsr_r":9.4,"spr":131.0,"spr_n":10,"spr_r":1.2,"acc":25,"dec":48,"vmax":29.3,"hacc":0.0,"hdec":15.3,"z1":3420.0,"z2":4426.0,"z3":2265.0,"z4":918.0,"z5":138.0},{"name":"김재봉","no":"34","pos":"CB","min":71.5,"dist":6865.0,"dpm":96.1,"hsr":241.0,"hsr_n":16,"hsr_r":3.5,"spr":73.0,"spr_n":4,"spr_r":1.1,"acc":23,"dec":11,"vmax":30.4,"hacc":2.7,"hdec":1.5,"z1":3302.0,"z2":2625.0,"z3":694.0,"z4":173.0,"z5":71.0},{"name":"황정욱","no":"37","pos":"CB","min":11.9,"dist":1137.0,"dpm":96.0,"hsr":44.0,"hsr_n":2,"hsr_r":3.8,"spr":23.0,"spr_n":1,"spr_r":2.0,"acc":4,"dec":11,"vmax":29.9,"hacc":0.0,"hdec":3.8,"z1":415.0,"z2":504.0,"z3":175.0,"z4":21.0,"z5":23.0},{"name":"권순호","no":"40","pos":"WF","min":125.6,"dist":2921.0,"dpm":23.3,"hsr":253.0,"hsr_n":8,"hsr_r":8.7,"spr":168.0,"spr_n":6,"spr_r":5.8,"acc":15,"dec":7,"vmax":32.4,"hacc":9.3,"hdec":4.6,"z1":2087.0,"z2":427.0,"z3":153.0,"z4":87.0,"z5":166.0},{"name":"송태성","no":"77","pos":"CM","min":102.9,"dist":10683.0,"dpm":103.8,"hsr":971.0,"hsr_n":61,"hsr_r":9.1,"spr":185.0,"spr_n":13,"spr_r":1.7,"acc":46,"dec":78,"vmax":29.4,"hacc":5.9,"hdec":43.5,"z1":4634.0,"z2":3546.0,"z3":1539.0,"z4":770.0,"z5":194.0},{"name":"김훈민","no":"91","pos":"FB","min":91.6,"dist":9825.0,"dpm":107.3,"hsr":832.0,"hsr_n":51,"hsr_r":8.5,"spr":174.0,"spr_n":12,"spr_r":1.8,"acc":35,"dec":60,"vmax":30.7,"hacc":2.7,"hdec":36.5,"z1":3578.0,"z2":4136.0,"z3":1309.0,"z4":632.0,"z5":170.0},{"name":"김성현","no":"99","pos":"CF","min":72.0,"dist":7831.0,"dpm":108.8,"hsr":475.0,"hsr_n":34,"hsr_r":6.1,"spr":85.0,"spr_n":6,"spr_r":1.1,"acc":19,"dec":36,"vmax":29.3,"hacc":1.7,"hdec":10.6,"z1":3272.0,"z2":3137.0,"z3":947.0,"z4":396.0,"z5":79.0}]},{"r":"8R","opp":"부산교통","result":"L","sc":"0-4","players":[{"name":"송영민","no":"6","pos":"CB","min":106.8,"dist":9935.0,"dpm":93.1,"hsr":815.0,"hsr_n":42,"hsr_r":8.2,"spr":245.0,"spr_n":17,"spr_r":2.5,"acc":35,"dec":49,"vmax":31.1,"hacc":8.4,"hdec":20.9,"z1":4595.0,"z2":3347.0,"z3":1173.0,"z4":590.0,"z5":230.0},{"name":"김원준","no":"11","pos":"WF","min":71.9,"dist":7284.0,"dpm":101.3,"hsr":584.0,"hsr_n":47,"hsr_r":8.0,"spr":114.0,"spr_n":8,"spr_r":1.6,"acc":42,"dec":52,"vmax":31.1,"hacc":2.6,"hdec":25.0,"z1":3106.0,"z2":2233.0,"z3":1357.0,"z4":476.0,"z5":112.0},{"name":"구승훈","no":"14","pos":"CM","min":106.8,"dist":12421.0,"dpm":116.4,"hsr":868.0,"hsr_n":60,"hsr_r":7.0,"spr":237.0,"spr_n":14,"spr_r":1.9,"acc":38,"dec":64,"vmax":31.1,"hacc":5.2,"hdec":26.0,"z1":4239.0,"z2":4786.0,"z3":2523.0,"z4":649.0,"z5":224.0},{"name":"손정민","no":"17","pos":"CM","min":72.1,"dist":7251.0,"dpm":100.6,"hsr":321.0,"hsr_n":23,"hsr_r":4.4,"spr":52.0,"spr_n":5,"spr_r":0.7,"acc":12,"dec":23,"vmax":29.0,"hacc":1.3,"hdec":11.6,"z1":2670.0,"z2":3067.0,"z3":1213.0,"z4":250.0,"z5":51.0},{"name":"심정용","no":"19","pos":"FB","min":35.9,"dist":4204.0,"dpm":117.3,"hsr":473.0,"hsr_n":29,"hsr_r":11.3,"spr":165.0,"spr_n":7,"spr_r":3.9,"acc":10,"dec":24,"vmax":34.4,"hacc":3.1,"hdec":15.4,"z1":1502.0,"z2":1537.0,"z3":701.0,"z4":309.0,"z5":155.0},{"name":"이주영","no":"20","pos":"CB","min":26.8,"dist":2749.0,"dpm":102.5,"hsr":238.0,"hsr_n":9,"hsr_r":8.7,"spr":142.0,"spr_n":5,"spr_r":5.2,"acc":8,"dec":9,"vmax":33.0,"hacc":3.6,"hdec":4.9,"z1":1009.0,"z2":1067.0,"z3":433.0,"z4":102.0,"z5":139.0},{"name":"김길훈","no":"21","pos":"FB","min":129.4,"dist":2604.0,"dpm":20.1,"hsr":0.0,"hsr_n":0,"hsr_r":0.0,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":4,"dec":2,"vmax":19.9,"hacc":0.9,"hdec":0.0,"z1":2071.0,"z2":447.0,"z3":85.0,"z4":1.0,"z5":0.0},{"name":"이성윤","no":"24","pos":"FB","min":106.8,"dist":11122.0,"dpm":104.2,"hsr":1078.0,"hsr_n":69,"hsr_r":9.7,"spr":206.0,"spr_n":16,"spr_r":1.9,"acc":41,"dec":69,"vmax":31.6,"hacc":2.4,"hdec":27.6,"z1":4954.0,"z2":3408.0,"z3":1704.0,"z4":852.0,"z5":203.0},{"name":"권태영","no":"27","pos":"WF","min":36.7,"dist":3846.0,"dpm":104.9,"hsr":301.0,"hsr_n":23,"hsr_r":7.8,"spr":48.0,"spr_n":6,"spr_r":1.2,"acc":24,"dec":23,"vmax":31.5,"hacc":7.4,"hdec":9.4,"z1":1484.0,"z2":1298.0,"z3":757.0,"z4":261.0,"z5":47.0},{"name":"김성순","no":"31","pos":"CM","min":106.8,"dist":11987.0,"dpm":112.3,"hsr":1411.0,"hsr_n":79,"hsr_r":11.8,"spr":252.0,"spr_n":15,"spr_r":2.1,"acc":29,"dec":57,"vmax":29.8,"hacc":5.4,"hdec":16.4,"z1":3969.0,"z2":4097.0,"z3":2523.0,"z4":1159.0,"z5":239.0},{"name":"김재봉","no":"34","pos":"CB","min":81.5,"dist":7603.0,"dpm":93.3,"hsr":364.0,"hsr_n":22,"hsr_r":4.8,"spr":105.0,"spr_n":7,"spr_r":1.4,"acc":25,"dec":17,"vmax":32.8,"hacc":5.8,"hdec":14.4,"z1":3638.0,"z2":2634.0,"z3":987.0,"z4":247.0,"z5":97.0},{"name":"최성민","no":"39","pos":"CF","min":129.4,"dist":2484.0,"dpm":19.2,"hsr":66.0,"hsr_n":3,"hsr_r":2.7,"spr":12.0,"spr_n":1,"spr_r":0.5,"acc":3,"dec":3,"vmax":27.2,"hacc":1.5,"hdec":1.7,"z1":1951.0,"z2":356.0,"z3":110.0,"z4":54.0,"z5":12.0},{"name":"송태성","no":"77","pos":"CM","min":55.9,"dist":5167.0,"dpm":92.5,"hsr":409.0,"hsr_n":28,"hsr_r":7.9,"spr":72.0,"spr_n":6,"spr_r":1.4,"acc":18,"dec":26,"vmax":31.2,"hacc":3.4,"hdec":14.2,"z1":2455.0,"z2":1588.0,"z3":711.0,"z4":336.0,"z5":77.0},{"name":"김훈민","no":"91","pos":"FB","min":106.8,"dist":10853.0,"dpm":101.7,"hsr":872.0,"hsr_n":66,"hsr_r":8.0,"spr":142.0,"spr_n":12,"spr_r":1.3,"acc":43,"dec":112,"vmax":28.9,"hacc":8.7,"hdec":70.3,"z1":3928.0,"z2":4092.0,"z3":1978.0,"z4":713.0,"z5":142.0},{"name":"김성현","no":"99","pos":"CF","min":50.9,"dist":5286.0,"dpm":103.9,"hsr":246.0,"hsr_n":20,"hsr_r":4.7,"spr":22.0,"spr_n":3,"spr_r":0.4,"acc":14,"dec":19,"vmax":27.7,"hacc":0.0,"hdec":1.2,"z1":2146.0,"z2":2221.0,"z3":677.0,"z4":222.0,"z5":19.0}]},{"r":"9R","opp":"경주한수원","result":"W","sc":"2-0","players":[{"name":"김믿음","no":"3","pos":"CB","min":32.0,"dist":3043.0,"dpm":95.1,"hsr":532.0,"hsr_n":21,"hsr_r":17.5,"spr":153.0,"spr_n":7,"spr_r":5.0,"acc":13,"dec":7,"vmax":27.7,"hacc":0.0,"hdec":0.0,"z1":1133.0,"z2":1068.0,"z3":316.0,"z4":400.0,"z5":127.0},{"name":"송영민","no":"6","pos":"CB","min":32.6,"dist":3456.0,"dpm":106.0,"hsr":471.0,"hsr_n":20,"hsr_r":13.6,"spr":13.0,"spr_n":2,"spr_r":0.4,"acc":8,"dec":11,"vmax":26.7,"hacc":0.0,"hdec":5.5,"z1":1124.0,"z2":1247.0,"z3":624.0,"z4":448.0,"z5":13.0},{"name":"조건규","no":"9","pos":"CF","min":72.7,"dist":7193.0,"dpm":99.0,"hsr":749.0,"hsr_n":43,"hsr_r":10.4,"spr":229.0,"spr_n":14,"spr_r":3.2,"acc":46,"dec":32,"vmax":31.3,"hacc":9.8,"hdec":6.5,"z1":3097.0,"z2":2226.0,"z3":1121.0,"z4":522.0,"z5":227.0},{"name":"김원준","no":"11","pos":"WF","min":36.7,"dist":4374.0,"dpm":119.3,"hsr":446.0,"hsr_n":28,"hsr_r":10.2,"spr":101.0,"spr_n":10,"spr_r":2.3,"acc":34,"dec":44,"vmax":30.7,"hacc":7.7,"hdec":23.6,"z1":1533.0,"z2":1559.0,"z3":839.0,"z4":350.0,"z5":93.0},{"name":"구승훈","no":"14","pos":"CM","min":107.8,"dist":12596.0,"dpm":116.9,"hsr":1011.0,"hsr_n":68,"hsr_r":8.0,"spr":156.0,"spr_n":10,"spr_r":1.2,"acc":39,"dec":61,"vmax":31.6,"hacc":1.1,"hdec":23.4,"z1":4040.0,"z2":4938.0,"z3":2617.0,"z4":850.0,"z5":152.0},{"name":"손정민","no":"17","pos":"CM","min":107.8,"dist":10892.0,"dpm":101.1,"hsr":593.0,"hsr_n":36,"hsr_r":5.4,"spr":150.0,"spr_n":9,"spr_r":1.4,"acc":28,"dec":41,"vmax":31.0,"hacc":5.0,"hdec":15.5,"z1":3908.0,"z2":4517.0,"z3":1870.0,"z4":448.0,"z5":149.0},{"name":"심정용","no":"19","pos":"FB","min":78.9,"dist":8098.0,"dpm":102.7,"hsr":643.0,"hsr_n":42,"hsr_r":7.9,"spr":151.0,"spr_n":10,"spr_r":1.9,"acc":27,"dec":55,"vmax":32.8,"hacc":3.4,"hdec":31.0,"z1":3283.0,"z2":2880.0,"z3":1306.0,"z4":482.0,"z5":148.0},{"name":"김길훈","no":"21","pos":"FB","min":9.3,"dist":1257.0,"dpm":134.9,"hsr":482.0,"hsr_n":10,"hsr_r":38.4,"spr":4.0,"spr_n":1,"spr_r":0.3,"acc":5,"dec":0,"vmax":25.6,"hacc":0.0,"hdec":0.0,"z1":210.0,"z2":381.0,"z3":185.0,"z4":477.0,"z5":4.0},{"name":"이성윤","no":"24","pos":"FB","min":107.8,"dist":11216.0,"dpm":104.1,"hsr":912.0,"hsr_n":60,"hsr_r":8.1,"spr":222.0,"spr_n":18,"spr_r":2.0,"acc":46,"dec":79,"vmax":33.8,"hacc":5.1,"hdec":40.4,"z1":4606.0,"z2":4082.0,"z3":1616.0,"z4":691.0,"z5":221.0},{"name":"권태영","no":"27","pos":"WF","min":73.0,"dist":7254.0,"dpm":99.4,"hsr":715.0,"hsr_n":47,"hsr_r":9.9,"spr":207.0,"spr_n":9,"spr_r":2.9,"acc":43,"dec":56,"vmax":31.7,"hacc":9.4,"hdec":21.5,"z1":2942.0,"z2":2534.0,"z3":1075.0,"z4":494.0,"z5":208.0},{"name":"김성순","no":"31","pos":"CM","min":87.3,"dist":9856.0,"dpm":112.9,"hsr":1187.0,"hsr_n":75,"hsr_r":12.0,"spr":136.0,"spr_n":10,"spr_r":1.4,"acc":23,"dec":60,"vmax":29.0,"hacc":0.0,"hdec":22.6,"z1":3160.0,"z2":3428.0,"z3":2084.0,"z4":1051.0,"z5":133.0},{"name":"김재봉","no":"34","pos":"CB","min":87.3,"dist":7938.0,"dpm":91.0,"hsr":326.0,"hsr_n":25,"hsr_r":4.1,"spr":64.0,"spr_n":4,"spr_r":0.8,"acc":21,"dec":26,"vmax":31.8,"hacc":7.5,"hdec":10.5,"z1":3721.0,"z2":2918.0,"z3":982.0,"z4":252.0,"z5":65.0},{"name":"최성민","no":"39","pos":"CF","min":9.3,"dist":1225.0,"dpm":131.4,"hsr":516.0,"hsr_n":10,"hsr_r":42.1,"spr":43.0,"spr_n":1,"spr_r":3.5,"acc":2,"dec":0,"vmax":31.3,"hacc":0.0,"hdec":0.0,"z1":166.0,"z2":387.0,"z3":160.0,"z4":468.0,"z5":44.0},{"name":"송태성","no":"77","pos":"CM","min":107.8,"dist":10756.0,"dpm":99.8,"hsr":998.0,"hsr_n":63,"hsr_r":9.3,"spr":248.0,"spr_n":17,"spr_r":2.3,"acc":58,"dec":81,"vmax":32.3,"hacc":14.1,"hdec":36.2,"z1":4660.0,"z2":3488.0,"z3":1624.0,"z4":743.0,"z5":242.0},{"name":"김훈민","no":"91","pos":"FB","min":39.5,"dist":4102.0,"dpm":104.0,"hsr":698.0,"hsr_n":28,"hsr_r":17.0,"spr":34.0,"spr_n":2,"spr_r":0.8,"acc":10,"dec":35,"vmax":30.5,"hacc":0.9,"hdec":18.6,"z1":1286.0,"z2":1511.0,"z3":610.0,"z4":660.0,"z5":36.0},{"name":"김성현","no":"99","pos":"CF","min":36.7,"dist":4333.0,"dpm":118.2,"hsr":317.0,"hsr_n":20,"hsr_r":7.3,"spr":52.0,"spr_n":3,"spr_r":1.2,"acc":7,"dec":20,"vmax":29.4,"hacc":0.0,"hdec":6.8,"z1":1528.0,"z2":1689.0,"z3":795.0,"z4":270.0,"z5":52.0}]},{"r":"10R","opp":"대전코레일","result":"L","sc":"0-3","players":[{"name":"김믿음","no":"3","pos":"CB","min":6.6,"dist":816.0,"dpm":124.3,"hsr":532.0,"hsr_n":10,"hsr_r":65.1,"spr":84.0,"spr_n":5,"spr_r":10.2,"acc":6,"dec":2,"vmax":28.2,"hacc":0.0,"hdec":0.0,"z1":137.0,"z2":50.0,"z3":102.0,"z4":460.0,"z5":67.0},{"name":"송영민","no":"6","pos":"CB","min":102.0,"dist":9748.0,"dpm":95.5,"hsr":627.0,"hsr_n":43,"hsr_r":6.4,"spr":150.0,"spr_n":9,"spr_r":1.5,"acc":36,"dec":44,"vmax":29.6,"hacc":4.6,"hdec":20.2,"z1":4517.0,"z2":3263.0,"z3":1321.0,"z4":504.0,"z5":143.0},{"name":"장동혁","no":"8","pos":"CM","min":35.9,"dist":4024.0,"dpm":112.3,"hsr":182.0,"hsr_n":15,"hsr_r":4.5,"spr":8.0,"spr_n":1,"spr_r":0.2,"acc":11,"dec":19,"vmax":27.0,"hacc":2.4,"hdec":10.0,"z1":1206.0,"z2":1840.0,"z3":807.0,"z4":163.0,"z5":9.0},{"name":"김원준","no":"11","pos":"WF","min":52.3,"dist":6025.0,"dpm":115.3,"hsr":635.0,"hsr_n":39,"hsr_r":10.5,"spr":111.0,"spr_n":6,"spr_r":1.8,"acc":32,"dec":41,"vmax":32.8,"hacc":2.3,"hdec":9.1,"z1":2288.0,"z2":2009.0,"z3":1095.0,"z4":526.0,"z5":108.0},{"name":"구승훈","no":"14","pos":"CM","min":63.7,"dist":7432.0,"dpm":116.6,"hsr":551.0,"hsr_n":34,"hsr_r":7.4,"spr":105.0,"spr_n":8,"spr_r":1.4,"acc":18,"dec":39,"vmax":30.5,"hacc":1.1,"hdec":16.5,"z1":2494.0,"z2":3037.0,"z3":1346.0,"z4":455.0,"z5":101.0},{"name":"손정민","no":"17","pos":"CM","min":39.8,"dist":4703.0,"dpm":118.3,"hsr":356.0,"hsr_n":18,"hsr_r":7.6,"spr":70.0,"spr_n":4,"spr_r":1.5,"acc":9,"dec":14,"vmax":28.8,"hacc":0.0,"hdec":2.5,"z1":1442.0,"z2":2202.0,"z3":705.0,"z4":287.0,"z5":67.0},{"name":"심정용","no":"19","pos":"FB","min":19.9,"dist":2338.0,"dpm":117.6,"hsr":632.0,"hsr_n":17,"hsr_r":27.1,"spr":122.0,"spr_n":6,"spr_r":5.2,"acc":12,"dec":7,"vmax":33.0,"hacc":0.0,"hdec":2.3,"z1":658.0,"z2":632.0,"z3":428.0,"z4":511.0,"z5":109.0},{"name":"김길훈","no":"21","pos":"FB","min":6.6,"dist":839.0,"dpm":127.8,"hsr":459.0,"hsr_n":10,"hsr_r":54.7,"spr":8.0,"spr_n":2,"spr_r":1.0,"acc":5,"dec":0,"vmax":25.5,"hacc":0.0,"hdec":0.0,"z1":175.0,"z2":72.0,"z3":142.0,"z4":445.0,"z5":4.0},{"name":"이성윤","no":"24","pos":"FB","min":102.0,"dist":11128.0,"dpm":109.1,"hsr":888.0,"hsr_n":56,"hsr_r":8.0,"spr":185.0,"spr_n":13,"spr_r":1.7,"acc":38,"dec":62,"vmax":31.8,"hacc":2.5,"hdec":33.4,"z1":4445.0,"z2":3975.0,"z3":1844.0,"z4":677.0,"z5":187.0},{"name":"김성순","no":"31","pos":"CM","min":70.7,"dist":7786.0,"dpm":110.2,"hsr":632.0,"hsr_n":44,"hsr_r":8.1,"spr":81.0,"spr_n":5,"spr_r":1.0,"acc":19,"dec":40,"vmax":30.2,"hacc":5.4,"hdec":12.4,"z1":2831.0,"z2":2770.0,"z3":1539.0,"z4":568.0,"z5":79.0},{"name":"황정욱","no":"37","pos":"CB","min":102.0,"dist":10652.0,"dpm":104.4,"hsr":481.0,"hsr_n":32,"hsr_r":4.5,"spr":30.0,"spr_n":2,"spr_r":0.3,"acc":23,"dec":43,"vmax":28.1,"hacc":0.9,"hdec":17.8,"z1":3784.0,"z2":4782.0,"z3":1613.0,"z4":448.0,"z5":26.0},{"name":"송태성","no":"77","pos":"CM","min":94.3,"dist":9639.0,"dpm":102.3,"hsr":891.0,"hsr_n":54,"hsr_r":9.2,"spr":272.0,"spr_n":17,"spr_r":2.8,"acc":42,"dec":81,"vmax":31.2,"hacc":2.9,"hdec":36.4,"z1":4075.0,"z2":3398.0,"z3":1281.0,"z4":616.0,"z5":268.0},{"name":"김훈민","no":"91","pos":"FB","min":91.4,"dist":9911.0,"dpm":108.5,"hsr":871.0,"hsr_n":57,"hsr_r":8.8,"spr":201.0,"spr_n":10,"spr_r":2.0,"acc":40,"dec":85,"vmax":31.3,"hacc":5.4,"hdec":40.5,"z1":3406.0,"z2":3985.0,"z3":1667.0,"z4":652.0,"z5":202.0},{"name":"김성현","no":"99","pos":"CF","min":34.0,"dist":4022.0,"dpm":118.3,"hsr":117.0,"hsr_n":11,"hsr_r":2.9,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":6,"dec":11,"vmax":24.0,"hacc":0.0,"hdec":3.7,"z1":1431.0,"z2":1660.0,"z3":816.0,"z4":114.0,"z5":0.0}]},{"r":"11R","opp":"시흥시민","result":"D","sc":"1-1","players":[{"name":"김믿음","no":"3","pos":"CB","min":51.0,"dist":5156.0,"dpm":101.1,"hsr":321.0,"hsr_n":24,"hsr_r":6.2,"spr":80.0,"spr_n":5,"spr_r":1.5,"acc":15,"dec":21,"vmax":31.9,"hacc":1.9,"hdec":7.0,"z1":2120.0,"z2":1942.0,"z3":781.0,"z4":236.0,"z5":76.0},{"name":"송영민","no":"6","pos":"CB","min":27.3,"dist":2821.0,"dpm":103.3,"hsr":306.0,"hsr_n":20,"hsr_r":10.9,"spr":38.0,"spr_n":3,"spr_r":1.3,"acc":11,"dec":10,"vmax":29.2,"hacc":1.3,"hdec":2.2,"z1":994.0,"z2":970.0,"z3":560.0,"z4":258.0,"z5":38.0},{"name":"장동혁","no":"8","pos":"CM","min":15.5,"dist":1764.0,"dpm":114.2,"hsr":124.0,"hsr_n":9,"hsr_r":7.0,"spr":4.0,"spr_n":1,"spr_r":0.2,"acc":5,"dec":11,"vmax":25.8,"hacc":0.0,"hdec":4.1,"z1":507.0,"z2":770.0,"z3":368.0,"z4":117.0,"z5":3.0},{"name":"조건규","no":"9","pos":"CF","min":107.5,"dist":10103.0,"dpm":94.0,"hsr":570.0,"hsr_n":32,"hsr_r":5.6,"spr":102.0,"spr_n":8,"spr_r":1.0,"acc":61,"dec":61,"vmax":31.5,"hacc":9.0,"hdec":29.4,"z1":4185.0,"z2":3657.0,"z3":1682.0,"z4":476.0,"z5":103.0},{"name":"박하빈","no":"10","pos":"CM","min":93.4,"dist":10478.0,"dpm":112.2,"hsr":361.0,"hsr_n":30,"hsr_r":3.4,"spr":10.0,"spr_n":1,"spr_r":0.1,"acc":26,"dec":34,"vmax":26.4,"hacc":2.7,"hdec":13.0,"z1":3443.0,"z2":4758.0,"z3":1938.0,"z4":329.0,"z5":11.0},{"name":"김원준","no":"11","pos":"WF","min":56.5,"dist":5674.0,"dpm":100.4,"hsr":583.0,"hsr_n":38,"hsr_r":10.3,"spr":184.0,"spr_n":12,"spr_r":3.2,"acc":40,"dec":32,"vmax":31.9,"hacc":6.7,"hdec":15.9,"z1":2588.0,"z2":1762.0,"z3":752.0,"z4":391.0,"z5":181.0},{"name":"구승훈","no":"14","pos":"CM","min":51.0,"dist":5771.0,"dpm":113.1,"hsr":442.0,"hsr_n":32,"hsr_r":7.7,"spr":76.0,"spr_n":7,"spr_r":1.3,"acc":11,"dec":29,"vmax":27.7,"hacc":0.0,"hdec":8.8,"z1":2032.0,"z2":2198.0,"z3":1100.0,"z4":365.0,"z5":76.0},{"name":"손정민","no":"17","pos":"CM","min":80.5,"dist":8732.0,"dpm":108.5,"hsr":425.0,"hsr_n":32,"hsr_r":4.9,"spr":102.0,"spr_n":4,"spr_r":1.2,"acc":21,"dec":35,"vmax":30.3,"hacc":1.1,"hdec":14.2,"z1":2921.0,"z2":3740.0,"z3":1667.0,"z4":308.0,"z5":96.0},{"name":"이성윤","no":"24","pos":"FB","min":106.3,"dist":11087.0,"dpm":104.3,"hsr":867.0,"hsr_n":58,"hsr_r":7.8,"spr":276.0,"spr_n":18,"spr_r":2.5,"acc":44,"dec":72,"vmax":32.5,"hacc":3.1,"hdec":40.5,"z1":4793.0,"z2":3931.0,"z3":1504.0,"z4":581.0,"z5":278.0},{"name":"김성순","no":"31","pos":"CM","min":80.0,"dist":8548.0,"dpm":106.8,"hsr":888.0,"hsr_n":59,"hsr_r":10.4,"spr":63.0,"spr_n":5,"spr_r":0.7,"acc":27,"dec":58,"vmax":29.4,"hacc":1.0,"hdec":26.1,"z1":3200.0,"z2":2998.0,"z3":1469.0,"z4":819.0,"z5":61.0},{"name":"김재봉","no":"34","pos":"CB","min":107.5,"dist":9809.0,"dpm":91.2,"hsr":446.0,"hsr_n":29,"hsr_r":4.5,"spr":38.0,"spr_n":4,"spr_r":0.4,"acc":26,"dec":19,"vmax":27.4,"hacc":1.7,"hdec":9.8,"z1":4766.0,"z2":3493.0,"z3":1111.0,"z4":404.0,"z5":35.0},{"name":"황정욱","no":"37","pos":"CB","min":107.5,"dist":10252.0,"dpm":95.3,"hsr":484.0,"hsr_n":31,"hsr_r":4.7,"spr":111.0,"spr_n":6,"spr_r":1.1,"acc":29,"dec":55,"vmax":31.2,"hacc":1.0,"hdec":16.2,"z1":4195.0,"z2":4046.0,"z3":1530.0,"z4":364.0,"z5":117.0},{"name":"권순호","no":"40","pos":"WF","min":56.5,"dist":5809.0,"dpm":102.8,"hsr":448.0,"hsr_n":24,"hsr_r":7.7,"spr":125.0,"spr_n":8,"spr_r":2.1,"acc":14,"dec":32,"vmax":32.7,"hacc":0.0,"hdec":19.2,"z1":2448.0,"z2":1755.0,"z3":1164.0,"z4":322.0,"z5":119.0},{"name":"송태성","no":"77","pos":"CM","min":107.5,"dist":10083.0,"dpm":93.8,"hsr":782.0,"hsr_n":51,"hsr_r":7.8,"spr":179.0,"spr_n":12,"spr_r":1.8,"acc":42,"dec":62,"vmax":33.3,"hacc":8.0,"hdec":33.8,"z1":4358.0,"z2":3378.0,"z3":1562.0,"z4":613.0,"z5":172.0},{"name":"김훈민","no":"91","pos":"FB","min":29.4,"dist":3077.0,"dpm":104.6,"hsr":318.0,"hsr_n":17,"hsr_r":10.3,"spr":14.0,"spr_n":1,"spr_r":0.5,"acc":14,"dec":27,"vmax":26.4,"hacc":0.0,"hdec":9.2,"z1":1054.0,"z2":1082.0,"z3":625.0,"z4":301.0,"z5":14.0}]},{"r":"12R","opp":"양평FC","result":"W","sc":"1-0","players":[{"name":"송영민","no":"6","pos":"CB","min":29.7,"dist":2618.0,"dpm":88.1,"hsr":195.0,"hsr_n":8,"hsr_r":7.4,"spr":77.0,"spr_n":5,"spr_r":2.9,"acc":11,"dec":13,"vmax":30.8,"hacc":1.4,"hdec":6.0,"z1":1275.0,"z2":729.0,"z3":414.0,"z4":124.0,"z5":76.0},{"name":"조건규","no":"9","pos":"CF","min":18.1,"dist":1513.0,"dpm":83.5,"hsr":85.0,"hsr_n":4,"hsr_r":5.6,"spr":18.0,"spr_n":2,"spr_r":1.2,"acc":13,"dec":10,"vmax":28.3,"hacc":1.3,"hdec":4.3,"z1":812.0,"z2":438.0,"z3":178.0,"z4":67.0,"z5":19.0},{"name":"박하빈","no":"10","pos":"CM","min":106.9,"dist":11423.0,"dpm":106.8,"hsr":458.0,"hsr_n":34,"hsr_r":4.0,"spr":42.0,"spr_n":3,"spr_r":0.4,"acc":22,"dec":37,"vmax":27.8,"hacc":1.0,"hdec":9.7,"z1":4024.0,"z2":4801.0,"z3":2141.0,"z4":412.0,"z5":47.0},{"name":"김원준","no":"11","pos":"WF","min":101.5,"dist":9731.0,"dpm":95.9,"hsr":1089.0,"hsr_n":59,"hsr_r":11.2,"spr":278.0,"spr_n":20,"spr_r":2.9,"acc":59,"dec":55,"vmax":30.3,"hacc":11.4,"hdec":22.9,"z1":4410.0,"z2":2990.0,"z3":1238.0,"z4":817.0,"z5":276.0},{"name":"구승훈","no":"14","pos":"CM","min":6.8,"dist":784.0,"dpm":114.9,"hsr":186.0,"hsr_n":10,"hsr_r":23.7,"spr":48.0,"spr_n":4,"spr_r":6.1,"acc":4,"dec":5,"vmax":28.2,"hacc":2.3,"hdec":0.0,"z1":268.0,"z2":169.0,"z3":161.0,"z4":141.0,"z5":44.0},{"name":"손정민","no":"17","pos":"CM","min":92.5,"dist":8648.0,"dpm":93.5,"hsr":704.0,"hsr_n":39,"hsr_r":8.1,"spr":166.0,"spr_n":7,"spr_r":1.9,"acc":18,"dec":28,"vmax":31.9,"hacc":1.1,"hdec":12.7,"z1":3542.0,"z2":3159.0,"z3":1251.0,"z4":529.0,"z5":166.0},{"name":"송준민","no":"18","pos":"WF","min":29.3,"dist":3141.0,"dpm":107.1,"hsr":600.0,"hsr_n":24,"hsr_r":19.1,"spr":266.0,"spr_n":13,"spr_r":8.5,"acc":17,"dec":21,"vmax":31.9,"hacc":3.3,"hdec":9.5,"z1":1083.0,"z2":985.0,"z3":477.0,"z4":327.0,"z5":269.0},{"name":"김길훈","no":"21","pos":"FB","min":20.3,"dist":2089.0,"dpm":102.8,"hsr":347.0,"hsr_n":14,"hsr_r":16.6,"spr":100.0,"spr_n":8,"spr_r":4.8,"acc":12,"dec":9,"vmax":28.4,"hacc":1.4,"hdec":0.0,"z1":716.0,"z2":623.0,"z3":400.0,"z4":255.0,"z5":95.0},{"name":"이성윤","no":"24","pos":"FB","min":106.9,"dist":10132.0,"dpm":94.7,"hsr":822.0,"hsr_n":45,"hsr_r":8.1,"spr":305.0,"spr_n":17,"spr_r":3.0,"acc":31,"dec":59,"vmax":32.8,"hacc":8.9,"hdec":31.0,"z1":4563.0,"z2":3407.0,"z3":1347.0,"z4":517.0,"z5":298.0},{"name":"김성순","no":"31","pos":"CM","min":78.2,"dist":7907.0,"dpm":101.1,"hsr":875.0,"hsr_n":47,"hsr_r":11.1,"spr":123.0,"spr_n":9,"spr_r":1.6,"acc":24,"dec":57,"vmax":28.5,"hacc":1.9,"hdec":26.1,"z1":3100.0,"z2":2407.0,"z3":1527.0,"z4":754.0,"z5":119.0},{"name":"김재봉","no":"34","pos":"CB","min":106.9,"dist":8653.0,"dpm":80.9,"hsr":224.0,"hsr_n":13,"hsr_r":2.6,"spr":44.0,"spr_n":3,"spr_r":0.5,"acc":10,"dec":9,"vmax":31.4,"hacc":0.0,"hdec":1.3,"z1":4635.0,"z2":2955.0,"z3":840.0,"z4":180.0,"z5":44.0},{"name":"황정욱","no":"37","pos":"CB","min":106.9,"dist":8831.0,"dpm":82.6,"hsr":214.0,"hsr_n":15,"hsr_r":2.4,"spr":34.0,"spr_n":1,"spr_r":0.4,"acc":35,"dec":39,"vmax":29.1,"hacc":2.4,"hdec":8.3,"z1":4056.0,"z2":3419.0,"z3":1139.0,"z4":184.0,"z5":33.0},{"name":"권순호","no":"40","pos":"WF","min":106.9,"dist":9967.0,"dpm":93.2,"hsr":875.0,"hsr_n":40,"hsr_r":8.8,"spr":379.0,"spr_n":15,"spr_r":3.8,"acc":40,"dec":53,"vmax":32.0,"hacc":7.3,"hdec":23.8,"z1":4621.0,"z2":3219.0,"z3":1251.0,"z4":514.0,"z5":363.0},{"name":"송태성","no":"77","pos":"CM","min":78.0,"dist":6846.0,"dpm":87.8,"hsr":376.0,"hsr_n":23,"hsr_r":5.5,"spr":102.0,"spr_n":6,"spr_r":1.5,"acc":31,"dec":29,"vmax":29.4,"hacc":8.4,"hdec":4.3,"z1":3242.0,"z2":2203.0,"z3":1027.0,"z4":279.0,"z5":96.0},{"name":"김성현","no":"99","pos":"CF","min":90.8,"dist":9266.0,"dpm":102.1,"hsr":588.0,"hsr_n":35,"hsr_r":6.3,"spr":123.0,"spr_n":8,"spr_r":1.3,"acc":18,"dec":41,"vmax":28.4,"hacc":0.0,"hdec":17.4,"z1":3720.0,"z2":3645.0,"z3":1313.0,"z4":467.0,"z5":121.0}]},{"r":"13R","opp":"창원FC","result":"L","sc":"0-1","players":[{"name":"장동혁","no":"8","pos":"CM","min":6.6,"dist":848.6,"dpm":128.9,"hsr":563.0,"hsr_n":10,"hsr_r":66.3,"spr":268.1,"spr_n":9,"spr_r":31.6,"acc":4,"dec":0,"vmax":27.0,"hacc":0.0,"hdec":0.0,"z1":130.6,"z2":62.9,"z3":94.3,"z4":344.4,"z5":216.5},{"name":"박하빈","no":"10","pos":"CM","min":105.8,"dist":12581.5,"dpm":119.0,"hsr":410.7,"hsr_n":30,"hsr_r":3.3,"spr":15.7,"spr_n":2,"spr_r":0.1,"acc":14,"dec":25,"vmax":26.9,"hacc":0.0,"hdec":12.9,"z1":3895.5,"z2":6419.8,"z3":1872.3,"z4":378.0,"z5":15.8},{"name":"김원준","no":"11","pos":"WF","min":53.0,"dist":5645.5,"dpm":106.5,"hsr":499.1,"hsr_n":38,"hsr_r":8.8,"spr":125.3,"spr_n":10,"spr_r":2.2,"acc":46,"dec":41,"vmax":34.4,"hacc":8.7,"hdec":13.4,"z1":2432.4,"z2":1964.1,"z3":751.3,"z4":370.9,"z5":126.8},{"name":"구승훈","no":"14","pos":"CM","min":33.7,"dist":3739.7,"dpm":111.1,"hsr":410.6,"hsr_n":24,"hsr_r":11.0,"spr":105.7,"spr_n":5,"spr_r":2.8,"acc":15,"dec":22,"vmax":32.0,"hacc":1.3,"hdec":4.8,"z1":1352.2,"z2":1333.7,"z3":647.4,"z4":302.7,"z5":103.8},{"name":"김장우","no":"16","pos":"CF","min":5.1,"dist":408.1,"dpm":80.0,"hsr":72.2,"hsr_n":3,"hsr_r":17.7,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":2,"dec":0,"vmax":25.5,"hacc":0.0,"hdec":0.0,"z1":215.1,"z2":86.9,"z3":34.4,"z4":71.0,"z5":0.7},{"name":"손정민","no":"17","pos":"CM","min":105.8,"dist":11432.6,"dpm":108.1,"hsr":543.8,"hsr_n":38,"hsr_r":4.8,"spr":105.6,"spr_n":7,"spr_r":0.9,"acc":19,"dec":35,"vmax":29.9,"hacc":2.7,"hdec":23.7,"z1":4081.7,"z2":5313.2,"z3":1511.2,"z4":426.3,"z5":100.2},{"name":"송준민","no":"18","pos":"WF","min":7.0,"dist":739.5,"dpm":105.9,"hsr":247.4,"hsr_n":6,"hsr_r":33.5,"spr":125.5,"spr_n":3,"spr_r":17.0,"acc":5,"dec":4,"vmax":28.8,"hacc":0.0,"hdec":1.4,"z1":212.7,"z2":170.2,"z3":109.2,"z4":130.2,"z5":117.2},{"name":"이주영","no":"20","pos":"CB","min":6.4,"dist":844.2,"dpm":131.2,"hsr":555.6,"hsr_n":10,"hsr_r":65.8,"spr":97.9,"spr_n":3,"spr_r":11.6,"acc":6,"dec":1,"vmax":27.9,"hacc":0.0,"hdec":0.0,"z1":148.9,"z2":53.3,"z3":88.0,"z4":465.6,"z5":88.4},{"name":"김길훈","no":"21","pos":"FB","min":53.0,"dist":6496.9,"dpm":122.5,"hsr":312.0,"hsr_n":26,"hsr_r":4.8,"spr":20.6,"spr_n":3,"spr_r":0.3,"acc":14,"dec":30,"vmax":26.4,"hacc":1.8,"hdec":7.7,"z1":2066.1,"z2":2902.9,"z3":1212.6,"z4":295.2,"z5":20.0},{"name":"이성윤","no":"24","pos":"FB","min":52.7,"dist":6318.0,"dpm":119.8,"hsr":659.5,"hsr_n":32,"hsr_r":10.4,"spr":231.5,"spr_n":10,"spr_r":3.7,"acc":13,"dec":47,"vmax":32.8,"hacc":1.5,"hdec":25.7,"z1":2575.7,"z2":2124.3,"z3":971.2,"z4":419.9,"z5":226.8},{"name":"김성순","no":"31","pos":"CM","min":52.7,"dist":6051.6,"dpm":114.8,"hsr":826.4,"hsr_n":43,"hsr_r":13.7,"spr":143.0,"spr_n":9,"spr_r":2.4,"acc":12,"dec":26,"vmax":28.0,"hacc":0.0,"hdec":8.1,"z1":2128.2,"z2":1786.4,"z3":1325.5,"z4":684.3,"z5":127.2},{"name":"김재봉","no":"34","pos":"CB","min":105.8,"dist":10069.1,"dpm":95.2,"hsr":275.2,"hsr_n":22,"hsr_r":2.7,"spr":17.7,"spr_n":2,"spr_r":0.2,"acc":21,"dec":11,"vmax":26.7,"hacc":3.2,"hdec":0.0,"z1":4843.2,"z2":3787.0,"z3":1165.6,"z4":261.2,"z5":12.1},{"name":"황정욱","no":"37","pos":"CB","min":105.8,"dist":10575.2,"dpm":100.0,"hsr":330.9,"hsr_n":22,"hsr_r":3.1,"spr":65.1,"spr_n":4,"spr_r":0.6,"acc":20,"dec":35,"vmax":29.4,"hacc":1.9,"hdec":13.2,"z1":4307.3,"z2":4685.1,"z3":1259.2,"z4":256.4,"z5":67.2},{"name":"권순호","no":"40","pos":"WF","min":86.2,"dist":9629.2,"dpm":111.7,"hsr":936.3,"hsr_n":53,"hsr_r":9.7,"spr":298.9,"spr_n":18,"spr_r":3.1,"acc":32,"dec":66,"vmax":33.6,"hacc":1.3,"hdec":38.1,"z1":3886.8,"z2":3568.3,"z3":1258.0,"z4":634.2,"z5":281.9},{"name":"지병우","no":"44","pos":"CB","min":105.8,"dist":10912.3,"dpm":103.2,"hsr":762.7,"hsr_n":52,"hsr_r":7.0,"spr":127.7,"spr_n":11,"spr_r":1.2,"acc":35,"dec":77,"vmax":30.1,"hacc":2.7,"hdec":37.6,"z1":4389.2,"z2":4550.7,"z3":1227.3,"z4":623.3,"z5":121.8},{"name":"송태성","no":"77","pos":"CM","min":94.6,"dist":9513.7,"dpm":100.6,"hsr":572.6,"hsr_n":32,"hsr_r":6.0,"spr":134.6,"spr_n":7,"spr_r":1.4,"acc":40,"dec":49,"vmax":29.5,"hacc":5.2,"hdec":18.4,"z1":4103.6,"z2":3533.9,"z3":1305.7,"z4":440.0,"z5":130.4},{"name":"김훈민","no":"91","pos":"FB","min":22.9,"dist":2609.8,"dpm":114.1,"hsr":297.1,"hsr_n":18,"hsr_r":11.4,"spr":46.6,"spr_n":4,"spr_r":1.8,"acc":7,"dec":14,"vmax":29.6,"hacc":0.9,"hdec":5.0,"z1":800.2,"z2":1031.8,"z3":488.9,"z4":245.0,"z5":43.9},{"name":"김성현","no":"99","pos":"CF","min":74.5,"dist":8116.4,"dpm":108.9,"hsr":393.0,"hsr_n":32,"hsr_r":4.8,"spr":24.4,"spr_n":2,"spr_r":0.3,"acc":26,"dec":28,"vmax":26.9,"hacc":1.1,"hdec":3.6,"z1":3321.7,"z2":3350.7,"z3":1054.4,"z4":365.1,"z5":24.5}]},{"r":"14R","opp":"울산시민","result":"W","sc":"2-1","players":[{"name":"송영민","no":"6","pos":"CB","min":89.1,"dist":9588.2,"dpm":107.7,"hsr":608.2,"hsr_n":44,"hsr_r":6.3,"spr":130.2,"spr_n":8,"spr_r":1.4,"acc":33,"dec":46,"vmax":29.4,"hacc":3.2,"hdec":10.2,"z1":3844.2,"z2":3646.9,"z3":1485.6,"z4":479.1,"z5":132.4},{"name":"박하빈","no":"10","pos":"CM","min":103.9,"dist":12858.4,"dpm":123.8,"hsr":509.2,"hsr_n":31,"hsr_r":4.0,"spr":16.6,"spr_n":1,"spr_r":0.1,"acc":26,"dec":42,"vmax":26.6,"hacc":1.1,"hdec":9.4,"z1":3662.3,"z2":6471.5,"z3":2207.8,"z4":498.8,"z5":18.0},{"name":"김원준","no":"11","pos":"WF","min":94.0,"dist":10347.3,"dpm":110.1,"hsr":693.4,"hsr_n":50,"hsr_r":6.7,"spr":192.8,"spr_n":10,"spr_r":1.9,"acc":67,"dec":49,"vmax":33.5,"hacc":10.1,"hdec":21.5,"z1":4271.1,"z2":3836.1,"z3":1526.5,"z4":515.2,"z5":198.5},{"name":"구승훈","no":"14","pos":"CM","min":53.3,"dist":6734.8,"dpm":126.3,"hsr":507.0,"hsr_n":30,"hsr_r":7.5,"spr":110.1,"spr_n":5,"spr_r":1.6,"acc":19,"dec":34,"vmax":32.5,"hacc":4.3,"hdec":15.2,"z1":2079.2,"z2":3008.3,"z3":1143.4,"z4":392.3,"z5":111.5},{"name":"손정민","no":"17","pos":"CM","min":50.6,"dist":5452.0,"dpm":107.9,"hsr":218.1,"hsr_n":17,"hsr_r":4.0,"spr":11.5,"spr_n":2,"spr_r":0.2,"acc":23,"dec":24,"vmax":26.6,"hacc":4.9,"hdec":7.9,"z1":1814.2,"z2":2451.5,"z3":966.1,"z4":208.7,"z5":11.5},{"name":"송준민","no":"18","pos":"WF","min":10.8,"dist":1239.8,"dpm":115.3,"hsr":158.5,"hsr_n":9,"hsr_r":12.8,"spr":61.6,"spr_n":2,"spr_r":5.0,"acc":11,"dec":11,"vmax":29.1,"hacc":3.9,"hdec":4.8,"z1":395.7,"z2":418.8,"z3":266.3,"z4":97.4,"z5":61.6},{"name":"이주영","no":"20","pos":"CB","min":17.2,"dist":1793.5,"dpm":104.3,"hsr":58.7,"hsr_n":4,"hsr_r":3.3,"spr":0.0,"spr_n":0,"spr_r":0.0,"acc":1,"dec":6,"vmax":26.6,"hacc":0.0,"hdec":2.9,"z1":650.8,"z2":762.0,"z3":322.6,"z4":56.0,"z5":2.1},{"name":"김성순","no":"31","pos":"CM","min":94.9,"dist":11616.7,"dpm":122.5,"hsr":1316.4,"hsr_n":81,"hsr_r":11.3,"spr":184.2,"spr_n":13,"spr_r":1.6,"acc":39,"dec":58,"vmax":28.8,"hacc":4.4,"hdec":24.6,"z1":3639.4,"z2":4457.1,"z3":2204.8,"z4":1133.3,"z5":182.1},{"name":"손민범","no":"36","pos":"CF","min":11.0,"dist":1360.0,"dpm":124.0,"hsr":137.6,"hsr_n":7,"hsr_r":10.1,"spr":41.7,"spr_n":2,"spr_r":3.1,"acc":5,"dec":5,"vmax":27.5,"hacc":0.0,"hdec":1.4,"z1":285.7,"z2":546.1,"z3":392.8,"z4":95.9,"z5":39.6},{"name":"황정욱","no":"37","pos":"CB","min":103.9,"dist":10704.3,"dpm":103.0,"hsr":360.5,"hsr_n":27,"hsr_r":3.4,"spr":52.4,"spr_n":3,"spr_r":0.5,"acc":40,"dec":41,"vmax":33.1,"hacc":7.1,"hdec":7.9,"z1":3989.0,"z2":5135.4,"z3":1222.1,"z4":303.2,"z5":54.6},{"name":"권순호","no":"40","pos":"WF","min":103.9,"dist":11203.3,"dpm":107.8,"hsr":1007.8,"hsr_n":58,"hsr_r":9.0,"spr":361.4,"spr_n":19,"spr_r":3.2,"acc":44,"dec":84,"vmax":34.4,"hacc":3.4,"hdec":46.9,"z1":4367.6,"z2":4367.5,"z3":1465.6,"z4":661.2,"z5":341.4},{"name":"지병우","no":"44","pos":"CB","min":103.9,"dist":10571.5,"dpm":101.8,"hsr":513.0,"hsr_n":37,"hsr_r":4.9,"spr":94.6,"spr_n":6,"spr_r":0.9,"acc":37,"dec":47,"vmax":31.8,"hacc":1.0,"hdec":20.0,"z1":3947.0,"z2":4880.3,"z3":1226.4,"z4":423.8,"z5":94.0},{"name":"송태성","no":"77","pos":"CM","min":95.5,"dist":9840.4,"dpm":103.0,"hsr":767.8,"hsr_n":44,"hsr_r":7.8,"spr":182.5,"spr_n":11,"spr_r":1.9,"acc":48,"dec":54,"vmax":31.7,"hacc":6.5,"hdec":23.0,"z1":4230.6,"z2":3435.5,"z3":1402.3,"z4":590.9,"z5":181.1},{"name":"김훈민","no":"91","pos":"FB","min":103.9,"dist":10766.8,"dpm":103.6,"hsr":777.0,"hsr_n":61,"hsr_r":7.2,"spr":169.5,"spr_n":12,"spr_r":1.6,"acc":57,"dec":107,"vmax":30.9,"hacc":6.7,"hdec":59.2,"z1":4061.9,"z2":4429.4,"z3":1504.7,"z4":601.1,"z5":169.6},{"name":"김성현","no":"99","pos":"CF","min":8.2,"dist":1060.1,"dpm":129.8,"hsr":139.3,"hsr_n":9,"hsr_r":13.1,"spr":27.2,"spr_n":1,"spr_r":2.6,"acc":0,"dec":6,"vmax":28.2,"hacc":0.0,"hdec":3.4,"z1":244.2,"z2":416.6,"z3":260.0,"z4":112.2,"z5":27.2}]},{"r":"15R","opp":"포천시민","result":"L","sc":"1-3","players":[{"name":"박하빈","no":"10","pos":"CM","min":100.9,"dist":11702.9,"dpm":116.0,"hsr":555.4,"hsr_n":40,"hsr_r":4.7,"spr":20.0,"spr_n":2,"spr_r":0.2,"acc":23,"dec":39,"vmax":26.6,"hacc":2.3,"hdec":11.8,"z1":3790.2,"z2":5157.3,"z3":2208.8,"z4":527.2,"z5":19.4},{"name":"김원준","no":"11","pos":"WF","min":100.9,"dist":10807.3,"dpm":107.1,"hsr":1242.1,"hsr_n":71,"hsr_r":11.5,"spr":451.5,"spr_n":28,"spr_r":4.2,"acc":72,"dec":77,"vmax":32.2,"hacc":17.1,"hdec":33.2,"z1":4342.8,"z2":3659.5,"z3":1565.3,"z4":793.6,"z5":446.1},{"name":"지병우","no":"44","pos":"CB","min":100.9,"dist":9743.9,"dpm":96.6,"hsr":703.4,"hsr_n":53,"hsr_r":7.2,"spr":191.1,"spr_n":14,"spr_r":2.0,"acc":37,"dec":65,"vmax":30.9,"hacc":6.2,"hdec":40.7,"z1":3983.1,"z2":3773.2,"z3":1276.4,"z4":526.3,"z5":184.9},{"name":"황정욱","no":"37","pos":"CB","min":100.9,"dist":9705.9,"dpm":96.2,"hsr":364.7,"hsr_n":30,"hsr_r":3.8,"spr":64.3,"spr_n":6,"spr_r":0.7,"acc":32,"dec":44,"vmax":27.6,"hacc":8.2,"hdec":14.6,"z1":3745.1,"z2":4107.3,"z3":1483.5,"z4":310.6,"z5":59.4},{"name":"김성순","no":"31","pos":"CM","min":81.6,"dist":8905.4,"dpm":109.2,"hsr":892.2,"hsr_n":48,"hsr_r":10.0,"spr":114.1,"spr_n":6,"spr_r":1.3,"acc":28,"dec":44,"vmax":28.2,"hacc":1.4,"hdec":14.0,"z1":3021.7,"z2":3323.7,"z3":1665.6,"z4":778.2,"z5":116.3},{"name":"권순호","no":"40","pos":"WF","min":88.5,"dist":8712.7,"dpm":98.5,"hsr":756.8,"hsr_n":54,"hsr_r":8.7,"spr":155.5,"spr_n":11,"spr_r":1.8,"acc":43,"dec":65,"vmax":32.6,"hacc":11.4,"hdec":40.8,"z1":3818.1,"z2":2819.4,"z3":1315.6,"z4":610.6,"z5":148.9},{"name":"송태성","no":"77","pos":"CM","min":85.7,"dist":8608.3,"dpm":100.5,"hsr":696.2,"hsr_n":38,"hsr_r":8.1,"spr":254.3,"spr_n":14,"spr_r":3.0,"acc":44,"dec":48,"vmax":31.3,"hacc":6.8,"hdec":24.0,"z1":3625.6,"z2":3015.7,"z3":1258.3,"z4":454.2,"z5":254.5},{"name":"손정민","no":"17","pos":"CM","min":67.5,"dist":7355.7,"dpm":109.0,"hsr":568.1,"hsr_n":34,"hsr_r":7.7,"spr":82.1,"spr_n":5,"spr_r":1.1,"acc":28,"dec":37,"vmax":28.8,"hacc":5.3,"hdec":26.0,"z1":2616.2,"z2":3008.4,"z3":1173.1,"z4":479.3,"z5":78.7},{"name":"이성윤","no":"24","pos":"FB","min":51.4,"dist":5487.4,"dpm":106.9,"hsr":445.0,"hsr_n":25,"hsr_r":8.1,"spr":112.5,"spr_n":7,"spr_r":2.1,"acc":18,"dec":30,"vmax":32.0,"hacc":6.0,"hdec":12.6,"z1":2399.6,"z2":1880.8,"z3":762.4,"z4":329.2,"z5":115.3},{"name":"송영민","no":"6","pos":"CB","min":51.4,"dist":5035.2,"dpm":98.1,"hsr":385.9,"hsr_n":24,"hsr_r":7.7,"spr":120.5,"spr_n":6,"spr_r":2.4,"acc":15,"dec":28,"vmax":28.7,"hacc":0.0,"hdec":7.3,"z1":2240.3,"z2":1828.3,"z3":583.4,"z4":264.1,"z5":119.2},{"name":"이현규","no":"23","pos":"WF","min":49.5,"dist":4954.6,"dpm":100.1,"hsr":277.6,"hsr_n":20,"hsr_r":5.6,"spr":41.2,"spr_n":3,"spr_r":0.8,"acc":18,"dec":23,"vmax":29.0,"hacc":1.0,"hdec":10.5,"z1":1922.4,"z2":2143.1,"z3":613.6,"z4":231.4,"z5":44.2},{"name":"김재봉","no":"34","pos":"CB","min":49.5,"dist":4717.4,"dpm":95.3,"hsr":237.2,"hsr_n":13,"hsr_r":5.0,"spr":35.4,"spr_n":3,"spr_r":0.8,"acc":17,"dec":9,"vmax":30.1,"hacc":1.7,"hdec":0.0,"z1":2038.3,"z2":1758.6,"z3":679.8,"z4":201.8,"z5":38.9},{"name":"최성민","no":"39","pos":"CF","min":20.7,"dist":2437.3,"dpm":117.7,"hsr":311.3,"hsr_n":15,"hsr_r":12.8,"spr":134.1,"spr_n":5,"spr_r":5.5,"acc":10,"dec":10,"vmax":31.7,"hacc":1.0,"hdec":4.1,"z1":906.4,"z2":977.5,"z3":250.1,"z4":170.6,"z5":132.7},{"name":"김훈민","no":"91","pos":"FB","min":16.8,"dist":1879.0,"dpm":111.6,"hsr":250.9,"hsr_n":15,"hsr_r":13.4,"spr":54.8,"spr_n":4,"spr_r":2.9,"acc":9,"dec":19,"vmax":26.7,"hacc":0.0,"hdec":12.4,"z1":581.1,"z2":716.7,"z3":345.3,"z4":190.8,"z5":45.1},{"name":"이주영","no":"20","pos":"CB","min":20.2,"dist":1795.4,"dpm":89.1,"hsr":127.5,"hsr_n":8,"hsr_r":7.1,"spr":11.0,"spr_n":1,"spr_r":0.6,"acc":13,"dec":4,"vmax":27.9,"hacc":2.3,"hdec":0.0,"z1":664.7,"z2":590.9,"z3":413.2,"z4":116.2,"z5":10.3}]},{"r":"16R","opp":"당진시민","result":"L","sc":"2-5","players":[{"name":"박하빈","no":"10","pos":"CM","min":106.0,"dist":12440.5,"dpm":117.4,"hsr":694.4,"hsr_n":44,"hsr_r":5.6,"spr":115.1,"spr_n":5,"spr_r":0.9,"acc":21,"dec":31,"vmax":28.8,"hacc":0.0,"hdec":5.1,"z1":3933.8,"z2":5702.6,"z3":2115.3,"z4":573.7,"z5":115.2},{"name":"송태성","no":"77","pos":"CM","min":106.0,"dist":10566.5,"dpm":99.7,"hsr":896.4,"hsr_n":49,"hsr_r":8.5,"spr":209.6,"spr_n":10,"spr_r":2.0,"acc":40,"dec":48,"vmax":31.2,"hacc":7.4,"hdec":17.5,"z1":4576.8,"z2":3516.3,"z3":1573.7,"z4":682.9,"z5":216.8},{"name":"송영민","no":"6","pos":"CB","min":106.0,"dist":10347.6,"dpm":97.6,"hsr":786.0,"hsr_n":50,"hsr_r":7.6,"spr":120.0,"spr_n":9,"spr_r":1.2,"acc":38,"dec":49,"vmax":29.3,"hacc":7.7,"hdec":27.6,"z1":4639.5,"z2":3400.2,"z3":1515.7,"z4":678.5,"z5":113.8},{"name":"김원준","no":"11","pos":"WF","min":93.7,"dist":10284.9,"dpm":109.8,"hsr":1120.0,"hsr_n":63,"hsr_r":10.9,"spr":285.9,"spr_n":20,"spr_r":2.8,"acc":46,"dec":41,"vmax":33.8,"hacc":8.7,"hdec":12.1,"z1":3923.9,"z2":3581.7,"z3":1658.4,"z4":848.8,"z5":272.1},{"name":"황정욱","no":"37","pos":"CB","min":106.0,"dist":10116.1,"dpm":95.5,"hsr":304.5,"hsr_n":21,"hsr_r":3.0,"spr":49.3,"spr_n":3,"spr_r":0.5,"acc":24,"dec":47,"vmax":29.8,"hacc":1.2,"hdec":10.8,"z1":3970.8,"z2":4518.2,"z3":1311.3,"z4":269.3,"z5":46.5},{"name":"김재봉","no":"34","pos":"CB","min":106.0,"dist":9859.0,"dpm":93.0,"hsr":374.2,"hsr_n":29,"hsr_r":3.8,"spr":60.9,"spr_n":3,"spr_r":0.6,"acc":23,"dec":15,"vmax":30.7,"hacc":3.9,"hdec":4.8,"z1":4783.5,"z2":3626.0,"z3":1081.1,"z4":311.7,"z5":56.7},{"name":"권순호","no":"40","pos":"WF","min":77.2,"dist":7941.8,"dpm":102.9,"hsr":678.9,"hsr_n":44,"hsr_r":8.5,"spr":231.8,"spr_n":11,"spr_r":2.9,"acc":27,"dec":50,"vmax":32.3,"hacc":8.2,"hdec":27.3,"z1":3248.9,"z2":2681.1,"z3":1344.7,"z4":438.6,"z5":228.6},{"name":"김훈민","no":"91","pos":"FB","min":54.3,"dist":6442.5,"dpm":118.6,"hsr":638.4,"hsr_n":40,"hsr_r":9.9,"spr":134.1,"spr_n":7,"spr_r":2.1,"acc":28,"dec":58,"vmax":30.4,"hacc":7.3,"hdec":27.3,"z1":1907.6,"z2":2790.3,"z3":1123.2,"z4":492.1,"z5":129.4},{"name":"김성순","no":"31","pos":"CM","min":59.6,"dist":6417.9,"dpm":107.7,"hsr":641.8,"hsr_n":39,"hsr_r":10.0,"spr":9.4,"spr_n":1,"spr_r":0.1,"acc":25,"dec":46,"vmax":26.7,"hacc":2.4,"hdec":18.4,"z1":2287.4,"z2":2256.6,"z3":1222.3,"z4":642.3,"z5":9.4},{"name":"장동혁","no":"8","pos":"CM","min":51.7,"dist":6113.5,"dpm":118.3,"hsr":286.6,"hsr_n":26,"hsr_r":4.7,"spr":11.9,"spr_n":1,"spr_r":0.2,"acc":21,"dec":29,"vmax":28.4,"hacc":8.9,"hdec":13.3,"z1":1961.1,"z2":2587.1,"z3":1290.3,"z4":259.5,"z5":15.4},{"name":"이성윤","no":"24","pos":"FB","min":54.3,"dist":5909.5,"dpm":108.8,"hsr":524.3,"hsr_n":22,"hsr_r":8.9,"spr":215.8,"spr_n":11,"spr_r":3.7,"acc":19,"dec":37,"vmax":34.6,"hacc":2.7,"hdec":12.5,"z1":2367.6,"z2":2220.4,"z3":790.7,"z4":311.4,"z5":219.4},{"name":"지병우","no":"44","pos":"CB","min":51.7,"dist":5322.3,"dpm":103.0,"hsr":347.3,"hsr_n":23,"hsr_r":6.5,"spr":76.8,"spr_n":6,"spr_r":1.4,"acc":21,"dec":41,"vmax":28.7,"hacc":4.3,"hdec":23.6,"z1":2000.6,"z2":2305.0,"z3":665.9,"z4":274.0,"z5":76.8},{"name":"이현규","no":"23","pos":"WF","min":47.9,"dist":5070.3,"dpm":105.8,"hsr":256.9,"hsr_n":17,"hsr_r":5.1,"spr":30.7,"spr_n":2,"spr_r":0.6,"acc":9,"dec":15,"vmax":30.6,"hacc":0.0,"hdec":7.7,"z1":1820.1,"z2":2259.0,"z3":728.2,"z4":232.3,"z5":30.8},{"name":"김길훈","no":"21","pos":"CAM","min":30.3,"dist":3637.7,"dpm":119.9,"hsr":352.6,"hsr_n":16,"hsr_r":9.7,"spr":162.0,"spr_n":5,"spr_r":4.5,"acc":10,"dec":15,"vmax":30.0,"hacc":0.0,"hdec":8.2,"z1":1092.7,"z2":1446.6,"z3":741.8,"z4":195.3,"z5":161.3},{"name":"김성현","no":"99","pos":"CF","min":15.8,"dist":1537.0,"dpm":97.2,"hsr":85.0,"hsr_n":8,"hsr_r":5.5,"spr":27.0,"spr_n":3,"spr_r":1.8,"acc":3,"dec":8,"vmax":27.7,"hacc":0.0,"hdec":2.6,"z1":601.0,"z2":662.9,"z3":186.9,"z4":60.5,"z5":25.7}]}];
+
+// ── CONSTANTS ──────────────────────────────────────────────
+const COL={W:'#22d3ee',D:'#fbbf24',L:'#f87171'};
+const ACC='#06d6a0';
+const POS_COLORS={CB:'#6366f1',FB:'#22d3ee',CM:'#06d6a0',WF:'#f97316',CF:'#f87171',DM:'#a78bfa'};
+const ZONE_COLS=['#1e3a5f','#1d4ed8','#059669','#d97706','#dc2626'];
+const ROUNDS_ORDER=['1R','2R','3R','4R','5R','6R','7R','8R','9R','10R','11R','12R','13R','14R','15R','16R'];
+
+// ── PREPROCESSING ──────────────────────────────────────────
+// Index by round
+const BY_ROUND={};
+RAW.forEach(rnd=>{ BY_ROUND[rnd.r]=rnd; });
+
+// Index by player
+const BY_PLAYER={};
+RAW.forEach(rnd=>{
+  rnd.players.forEach(p=>{
+    if(!BY_PLAYER[p.name]) BY_PLAYER[p.name]={pos:p.pos,rounds:{}};
+    BY_PLAYER[p.name].rounds[rnd.r]={...p,result:rnd.result,opp:rnd.opp};
+  });
+});
+
+// Team aggregates per round (only players with min>=45)
+const TEAM_AGG=ROUNDS_ORDER.map(r=>{
+  const rnd=BY_ROUND[r];
+  const ps=rnd.players.filter(p=>p.min>=45);
+  if(!ps.length) return {r,result:rnd.result,opp:rnd.opp,cnt:0};
+  return {
+    r, result:rnd.result, opp:rnd.opp, cnt:ps.length,
+    dist:ps.reduce((s,p)=>s+p.dist,0),
+    hsr:ps.reduce((s,p)=>s+p.hsr,0),
+    hsr_r:ps.reduce((s,p)=>s+p.hsr_r,0)/ps.length,
+    spr:ps.reduce((s,p)=>s+p.spr,0),
+    spr_r:ps.reduce((s,p)=>s+p.spr_r,0)/ps.length,
+    vmax:Math.max(...ps.map(p=>p.vmax)),
+    acc:ps.reduce((s,p)=>s+p.acc,0),
+    dec:ps.reduce((s,p)=>s+p.dec,0),
+    dpm:ps.reduce((s,p)=>s+p.dpm,0)/ps.length,
+  };
+});
+
+// ── HELPERS ────────────────────────────────────────────────
+function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0}
+function max(arr){return arr.length?Math.max(...arr):0}
+function min(arr){return arr.length?Math.min(...arr):0}
+function fmt1(v){return typeof v==='number'?v.toFixed(1):v}
+function fmtK(v){return v>=1000?(v/1000).toFixed(1)+'km':v.toFixed(0)+'m'}
+
+function switchTab(name){
+  const tabs=['team','player','load','profile','result'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===name));
+  document.querySelectorAll('.tab-pane').forEach((p,i)=>p.classList.toggle('active',tabs[i]===name));
+}
+
+// ── SVG BAR CHART ──────────────────────────────────────────
+function barChart(svgId, values, opts={}){
+  const svg=document.getElementById(svgId);
+  const W=460,H=200,pd={t:25,r:25,b:40,l:55};
+  const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+  const n=values.length,bw=cw/n*0.6;
+  const mx=opts.max||max(values.map(v=>v.val))*1.1||1;
+  const bmLine=opts.benchmark;
+  let html='';
+
+  // grid
+  const ticks=opts.ticks||5;
+  for(let i=0;i<=ticks;i++){
+    const v=mx*i/ticks;
+    const y=pd.t+ch-ch*i/ticks;
+    html+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+    html+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${opts.fmt?opts.fmt(v):v.toFixed(0)}</text>`;
+  }
+
+  // benchmark line
+  if(bmLine){
+    const by=pd.t+ch-ch*(bmLine/mx);
+    html+=`<line x1="${pd.l}" y1="${by.toFixed(0)}" x2="${W-pd.r}" y2="${by.toFixed(0)}" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="5,3" opacity=".8"/>`;
+    html+=`<text x="${W-pd.r+3}" y="${(by+4).toFixed(0)}" font-size="9" fill="#818cf8">기준</text>`;
+  }
+
+  values.forEach((item,i)=>{
+    const x=pd.l+i*(cw/n)+(cw/n-bw)/2;
+    const bh=ch*(Math.max(0,item.val)/mx);
+    const y=pd.t+ch-bh;
+    const col=item.color||ACC;
+    html+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity=".8" rx="3"/>`;
+    // value label on top
+    if(bh>12){
+      const lbl=opts.fmt?opts.fmt(item.val):Math.round(item.val);
+      html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-3).toFixed(0)}" font-size="8.5" fill="${col}" text-anchor="middle">${lbl}</text>`;
+    }
+    html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(H-pd.b+14).toFixed(0)}" font-size="9" fill="${COL[item.result]||'#64748b'}" text-anchor="middle">${item.r}</text>`;
+  });
+  svg.innerHTML=html;
+}
+
+// ── LINE CHART ─────────────────────────────────────────────
+function lineChart(svgId, series, labels, opts={}){
+  const svg=document.getElementById(svgId);
+  if(!svg)return;
+  const W=opts.w||460,H=opts.h||160,pd={t:15,r:20,b:35,l:45};
+  const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+  const n=labels.length;
+  const allVals=series.flatMap(s=>s.data.filter(v=>v!=null));
+  const mx=opts.max||(allVals.length?Math.max(...allVals)*1.15:1);
+  const mn=opts.min||0;
+
+  let html='';
+  // grid
+  for(let i=0;i<=4;i++){
+    const v=mn+(mx-mn)*i/4;
+    const y=pd.t+ch-ch*i/4;
+    html+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+    html+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${opts.fmt?opts.fmt(v):v.toFixed(0)}</text>`;
+  }
+  // benchmark
+  if(opts.benchmark){
+    const by=pd.t+ch-ch*(opts.benchmark-mn)/(mx-mn);
+    html+=`<line x1="${pd.l}" y1="${by.toFixed(0)}" x2="${W-pd.r}" y2="${by.toFixed(0)}" stroke="#6366f1" stroke-width="1" stroke-dasharray="4,3" opacity=".7"/>`;
+  }
+  if(opts.benchmark2){
+    const by=pd.t+ch-ch*(opts.benchmark2-mn)/(mx-mn);
+    html+=`<line x1="${pd.l}" y1="${by.toFixed(0)}" x2="${W-pd.r}" y2="${by.toFixed(0)}" stroke="#f97316" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>`;
+  }
+
+  // lines
+  series.forEach(s=>{
+    const pts=s.data.map((v,i)=>{
+      if(v==null)return null;
+      const x=pd.l+i*(cw/(n-1));
+      const y=pd.t+ch-ch*(v-mn)/(mx-mn);
+      return[x.toFixed(1),y.toFixed(1)];
+    }).filter(Boolean);
+    if(pts.length>1){
+      const polypts=pts.map(p=>p.join(',')).join(' ');
+      html+=`<polyline points="${polypts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
+    }
+    s.data.forEach((v,i)=>{
+      if(v==null)return;
+      const x=pd.l+i*(cw/(n-1));
+      const y=pd.t+ch-ch*(v-mn)/(mx-mn);
+      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${s.color}" stroke="#ffffff" stroke-width="1.5"/>`;
+    });
+  });
+
+  // x labels
+  labels.forEach((lbl,i)=>{
+    const x=pd.l+i*(cw/(n-1));
+    const rnd=BY_ROUND[lbl];
+    const col=rnd?COL[rnd.result]:'#64748b';
+    html+=`<text x="${x.toFixed(1)}" y="${(H-pd.b+14).toFixed(0)}" font-size="9" fill="${col}" text-anchor="middle">${lbl}</text>`;
+  });
+  svg.innerHTML=html;
+}
+
+// ── TAB 1: TEAM ─────────────────────────────────────────────
+function renderTeam(){
+  // Timeline
+  const tl=document.getElementById('tl');
+  ROUNDS_ORDER.forEach(r=>{
+    const rnd=BY_ROUND[r];
+    const d=document.createElement('div');
+    d.className=`mb ${rnd.result}`;
+    d.innerHTML=`<div class="mb-r">${r}</div><div class="mb-o">${rnd.opp}</div><div class="mb-s ${rnd.result}">${rnd.sc}</div>`;
+    tl.appendChild(d);
+  });
+
+  // KPI cards
+  const distVals=TEAM_AGG.filter(a=>a.cnt>0).map(a=>a.dist/1000);
+  const hsrRVals=TEAM_AGG.filter(a=>a.cnt>0).map(a=>a.hsr_r);
+  const sprVals=TEAM_AGG.filter(a=>a.cnt>0).map(a=>a.spr);
+  const vmaxVals=TEAM_AGG.filter(a=>a.cnt>0).map(a=>a.vmax);
+  const accVals=TEAM_AGG.filter(a=>a.cnt>0).map(a=>a.acc);
+
+  const kpis=[
+    {v:`${avg(distVals).toFixed(1)}km`, l:'평균 팀 총거리 (선발↑)', b:avg(distVals)>=95?'ok':'warn', bn:avg(distVals)>=95?'정상':'보완필요'},
+    {v:`${avg(hsrRVals).toFixed(1)}%`,  l:'평균 HSR Ratio',          b:avg(hsrRVals)>=6.5?'ok':'warn', bn:'목표 6.5%↑'},
+    {v:`${Math.round(avg(sprVals))}m`,  l:'평균 Sprint 거리',        b:avg(sprVals)>=1400?'ok':'warn', bn:'목표 1,400m↑'},
+    {v:`${max(vmaxVals).toFixed(1)}km/h`,l:'시즌 최고 속도',         b:'ok', bn:'권순호 33.5'},
+    {v:`${Math.round(avg(accVals))}회`, l:'평균 가속 횟수',          b:avg(accVals)>=300?'ok':'warn', bn:''},
+  ];
+  const grid=document.getElementById('team-kpis');
+  kpis.forEach(k=>{
+    const c=document.createElement('div');c.className='kpi-card';
+    c.innerHTML=`<span class="kv">${k.v}</span><div class="kl">${k.l}</div>${k.bn?`<span class="kb kb-${k.b}">${k.bn}</span>`:''}`;
+    grid.appendChild(c);
+  });
+
+  // Charts
+  barChart('team-dist-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.dist/1000:0,result:a.result,color:COL[a.result]})),
+    {max:140, fmt:v=>v.toFixed(0)+'km', benchmark:95});
+  barChart('team-hsr-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.hsr:0,result:a.result,color:'#06d6a0'})),
+    {max:10000, fmt:v=>Math.round(v)+'m', benchmark:7000});
+  barChart('team-hsrr-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.hsr_r:0,result:a.result,color:'#6366f1'})),
+    {max:12, fmt:v=>v.toFixed(1)+'%', benchmark:6.5});
+  barChart('team-spr-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.spr:0,result:a.result,color:'#f97316'})),
+    {max:2500, fmt:v=>Math.round(v)+'m', benchmark:1400});
+  barChart('team-vmax-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.vmax:0,result:a.result,color:'#fbbf24'})),
+    {max:36, fmt:v=>v.toFixed(1), benchmark:30});
+  barChart('team-acc-chart', TEAM_AGG.map(a=>({r:a.r,val:a.cnt>0?a.acc:0,result:a.result,color:'#f87171'})),
+    {max:500, fmt:v=>Math.round(v)+'회', benchmark:300});
+
+  // Insights
+  const bestDist=TEAM_AGG.reduce((a,b)=>b.dist>a.dist?b:a);
+  const worstDist=TEAM_AGG.filter(a=>a.cnt>0).reduce((a,b)=>b.dist<a.dist?b:a);
+  const bestHsrR=TEAM_AGG.filter(a=>a.cnt>0).reduce((a,b)=>b.hsr_r>a.hsr_r?b:a);
+  const insights=[
+    {tag:'tag-ok',   t:'최고 이동거리', body:`<strong>${bestDist.r} ${bestDist.opp}전 [${bestDist.result}]</strong> ${(bestDist.dist/1000).toFixed(1)}km. 팀 활동량이 가장 높았던 경기.`},
+    {tag:'tag-warn', t:'최저 이동거리', body:`<strong>${worstDist.r} ${worstDist.opp}전 [${worstDist.result}]</strong> ${(worstDist.dist/1000).toFixed(1)}km. 피로 누적 또는 전술적 선택 확인 필요.`},
+    {tag:'tag-key',  t:'HSR Ratio 최고', body:`<strong>${bestHsrR.r} ${bestHsrR.opp}전</strong> 팀 평균 HSR Ratio ${bestHsrR.hsr_r.toFixed(1)}%. 고강도 직선 움직임 비중 최고 경기.`},
+    {tag:'tag-ok',   t:'Sprint 강점', body:`5R 여주FC전 팀 Sprint 2,017m 최다. <strong>무승부</strong>에도 고강도 스프린트 다수 — 공격적 전술의 흔적.`},
+    {tag:'tag-warn', t:'6R 피지컬 저하', body:`<strong>6R 춘천시민전 [L]</strong> 팀 총거리 84.0km — 시즌 최저. 피로·부상·조직력 중 원인 분석 필요.`},
+    {tag:'tag-key',  t:'피지컬 vs 결과', body:`팀 총거리가 높은 경기(1R·2R·7R)가 반드시 승리로 이어지지 않음 → <strong>강도·방향성</strong>이 양보다 중요.`},
+  ];
+  const igrid=document.getElementById('team-insights');
+  insights.forEach(ins=>{
+    const c=document.createElement('div');c.className='ins';
+    c.innerHTML=`<span class="tag ${ins.tag}">${ins.t}</span><p>${ins.body}</p>`;
+    igrid.appendChild(c);
+  });
+}
+
+// ── TAB 2: PLAYER ──────────────────────────────────────────
+let selPlayer=null;
+function renderPlayerTab(){
+  const btns=document.getElementById('player-btns');
+  const MAIN_PLAYERS=Object.entries(BY_PLAYER)
+    .filter(([,p])=>Object.keys(p.rounds).length>=5)
+    .sort((a,b)=>Object.keys(b[1].rounds).length-Object.keys(a[1].rounds).length);
+
+  MAIN_PLAYERS.forEach(([name,pdata])=>{
+    const btn=document.createElement('button');
+    btn.className='pl-btn';
+    btn.innerHTML=`${name}<span class="pos-badge">${pdata.pos}</span>`;
+    btn.onclick=()=>{
+      selPlayer=name;
+      document.querySelectorAll('.pl-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPlayerDetail(name,pdata);
+    };
+    btns.appendChild(btn);
+  });
+}
+
+function renderPlayerDetail(name,pdata){
+  const con=document.getElementById('player-detail');
+  const rounds=ROUNDS_ORDER.filter(r=>pdata.rounds[r]);
+  const allRounds=ROUNDS_ORDER.map(r=>pdata.rounds[r]||null);
+
+  // Season bests
+  const fullGames=Object.values(pdata.rounds).filter(p=>p.min>=75);
+  const avgDist=avg(fullGames.map(p=>p.dist));
+  const avgHsrR=avg(fullGames.map(p=>p.hsr_r));
+  const avgSpr=avg(fullGames.map(p=>p.spr));
+  const maxVmax=max(Object.values(pdata.rounds).map(p=>p.vmax));
+  const maxDist=max(fullGames.map(p=>p.dist));
+  const maxHsrR=max(fullGames.map(p=>p.hsr_r));
+
+  const posCol=POS_COLORS[pdata.pos]||ACC;
+
+  con.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">
+      <div style="width:44px;height:44px;border-radius:10px;background:${posCol};opacity:.9;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:900;color:#fff">${pdata.pos}</div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:900">${name}</div>
+        <div style="font-size:.76rem;color:var(--muted)">${Object.keys(pdata.rounds).length}경기 출전 · 풀타임(75min+) ${fullGames.length}경기</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+        ${[
+          ['평균 이동거리',avgDist>0?fmtK(avgDist):'-'],
+          ['평균 HSR Ratio',avgHsrR>0?avgHsrR.toFixed(1)+'%':'-'],
+          ['평균 Sprint',avgSpr>0?Math.round(avgSpr)+'m':'-'],
+          ['최고 속도',maxVmax>0?maxVmax.toFixed(1)+'km/h':'-'],
+        ].map(([l,v])=>`<div class="kpi-card" style="min-width:100px"><span class="kv" style="font-size:1.1rem;color:${posCol}">${v}</span><div class="kl">${l}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div class="card"><h3>이동거리 (m) — 라운드별</h3>
+        <svg id="pl-dist-svg" viewBox="0 0 460 160" style="width:100%;display:block"></svg>
+        <div class="bm-note"><strong>포지션 벤치마크(90min)</strong> CB 8,700m · CM 11,500m · FB 10,800m · WF 9,500m · CF 9,400m</div>
+      </div>
+      <div class="card"><h3>HSR Ratio % — 라운드별</h3>
+        <svg id="pl-hsrr-svg" viewBox="0 0 460 160" style="width:100%;display:block"></svg>
+        <div class="bm-note"><strong>HSR Ratio 벤치마크</strong> WF/FB 8–12% · CM 6–9% · CB/CF 5–8% (Di Salvo et al., 2007)</div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card"><h3>Sprint 거리 (m) — 라운드별</h3>
+        <svg id="pl-spr-svg" viewBox="0 0 460 160" style="width:100%;display:block"></svg>
+        <div class="bm-note"><strong>Sprint 벤치마크 (K3 준프로 기준)</strong> 90min 기준 WF 200–320m · FB 150–250m · CM 110–200m · CB 70–130m · CF 130–220m. <em>Rampinini et al. (2007) Serie C · Vigne et al. (2010) Semi-pro — 엘리트 대비 30–40% 하향.</em></div>
+      </div>
+      <div class="card"><h3>최고 속도 (km/h) — 라운드별</h3>
+        <svg id="pl-vmax-svg" viewBox="0 0 460 160" style="width:100%;display:block"></svg>
+        <div class="bm-note"><strong>최고 속도 해석</strong> 엘리트 34+km/h · 프로 31–34km/h · 준프로 28–31km/h</div>
+      </div>
+    </div>`;
+
+  // Player comments
+  (function(){
+    const plComDiv=document.createElement('div');
+    plComDiv.className='comment-section';
+    const plCom=computePlayerComments(pdata);
+    const posBMc={CB:8700,FB:10800,CM:11500,WF:9500,CF:9400,DM:10000};
+    const posSprBMc={CB:100,FB:200,CM:150,WF:270,CF:180,DM:120};
+    const posHsrBMc={CB:6,FB:9,CM:7.5,WF:10,CF:7,DM:6};
+    plComDiv.innerHTML=`<div class="card"><h3 style="margin-bottom:12px">📋 선수 관리 코멘트</h3><div class="comment-list">${plCom.map(c=>`<div class="comment-item"><span class="comment-badge ${c.cls}">${c.lbl}</span><div class="comment-text">${c.txt}</div></div>`).join('')}</div><div class="bm-note" style="margin-top:10px"><strong>분석 기준</strong> 시즌 전반부 vs 후반부 비교 · 90분 환산 정규화 · 포지션 벤치마크: ${pdata.pos} 이동거리 ${posBMc[pdata.pos]||9500}m · Sprint ${posSprBMc[pdata.pos]||300}m · HSR Ratio ${posHsrBMc[pdata.pos]||7}%</div></div>`;
+    con.appendChild(plComDiv);
+  })();
+
+  // Draw charts
+  setTimeout(()=>{
+    // Position benchmarks
+    const posBM={CB:8700,FB:10800,CM:11500,WF:9500,CF:9400,DM:10000};
+    const posHsrBM={CB:6,FB:9,CM:7.5,WF:10,CF:7,DM:6};
+    const posSprBM={CB:100,FB:200,CM:150,WF:270,CF:180,DM:120};
+    const bm=posBM[pdata.pos]||9500;
+    const bmHsr=posHsrBM[pdata.pos]||7;
+    const bmSpr=posSprBM[pdata.pos]||300;
+
+    lineChart('pl-dist-svg',
+      [{data:ROUNDS_ORDER.map(r=>pdata.rounds[r]?.dist||null),color:posCol}],
+      ROUNDS_ORDER,{w:460,h:160,benchmark:bm,fmt:v=>Math.round(v/1000*10)/10+'k'});
+    lineChart('pl-hsrr-svg',
+      [{data:ROUNDS_ORDER.map(r=>pdata.rounds[r]?.hsr_r||null),color:'#06d6a0'}],
+      ROUNDS_ORDER,{w:460,h:160,benchmark:bmHsr,max:20,fmt:v=>v.toFixed(1)+'%'});
+    lineChart('pl-spr-svg',
+      [{data:ROUNDS_ORDER.map(r=>pdata.rounds[r]?.spr||null),color:'#f97316'}],
+      ROUNDS_ORDER,{w:460,h:160,benchmark:bmSpr,fmt:v=>Math.round(v)+'m'});
+    lineChart('pl-vmax-svg',
+      [{data:ROUNDS_ORDER.map(r=>pdata.rounds[r]?.vmax||null),color:'#fbbf24'}],
+      ROUNDS_ORDER,{w:460,h:160,benchmark:30,min:20,max:36,fmt:v=>v.toFixed(1)});
+  },0);
+}
+
+// ── TAB 3: LOAD / ACWR ────────────────────────────────────
+function computeACWR(){
+  const result=[];
+  // Get all players with enough data
+  Object.entries(BY_PLAYER).forEach(([name,pdata])=>{
+    const distByRound=ROUNDS_ORDER.map(r=>pdata.rounds[r]?.dist||null);
+    // Find last played round index
+    let lastIdx=-1;
+    for(let i=distByRound.length-1;i>=0;i--){if(distByRound[i]!=null){lastIdx=i;break;}}
+    if(lastIdx<0)return;
+
+    // Acute = last 1 round played
+    const acute=distByRound[lastIdx];
+    // Chronic = avg of up to 4 rounds before that
+    const prevGames=distByRound.slice(0,lastIdx).filter(v=>v!=null).slice(-4);
+    if(prevGames.length===0)return;
+    const chronic=avg(prevGames);
+    const acwr=chronic>0?acute/chronic:null;
+
+    // Latest round dist
+    const latestRound=ROUNDS_ORDER[lastIdx];
+    const latestDist=distByRound[lastIdx];
+
+    result.push({name,pos:pdata.pos,latestRound,latestDist,acute,chronic,acwr});
+  });
+  return result.sort((a,b)=>(b.acwr||0)-(a.acwr||0));
+}
+
+function renderLoad(){
+  const acwrData=computeACWR();
+
+  // Table
+  const t=document.getElementById('acwr-table');
+  let h=`<thead><tr>
+    <th style="text-align:left">선수</th><th>포지션</th><th>최신 라운드</th>
+    <th>급성 부하(m)</th><th>만성 부하(m)</th><th>ACWR</th><th>위험도</th>
+    <th style="min-width:100px">ACWR 시각화</th>
+  </tr></thead><tbody>`;
+
+  acwrData.forEach(p=>{
+    if(!p.acwr)return;
+    const riskCls=p.acwr>=1.5?'rb-danger':p.acwr>=1.3?'rb-warn':p.acwr<0.8?'rb-warn':'rb-ok';
+    const riskTxt=p.acwr>=1.5?'⚠️ 위험':p.acwr>=1.3?'🟡 주의':p.acwr<0.8?'🔵 저부하':'✅ 정상';
+    // Bar: 0.8–1.3 = ok, 1.3–1.5 = caution, >1.5 = danger
+    const barW=Math.min(100,p.acwr/2*100).toFixed(0);
+    const barCls=p.acwr>=1.5?'danger':p.acwr>=1.3?'caution':'ok';
+    const posCol=POS_COLORS[p.pos]||'#64748b';
+    h+=`<tr>
+      <td style="font-weight:700">${p.name}</td>
+      <td><span style="color:${posCol};font-weight:800">${p.pos}</span></td>
+      <td style="color:var(--muted)">${p.latestRound}</td>
+      <td>${Math.round(p.acute).toLocaleString()}m</td>
+      <td>${Math.round(p.chronic).toLocaleString()}m</td>
+      <td style="font-weight:900;color:${p.acwr>=1.5?'#f87171':p.acwr>=1.3?'#fbbf24':'#06d6a0'}">${p.acwr.toFixed(2)}</td>
+      <td><span class="risk-badge ${riskCls}">${riskTxt}</span></td>
+      <td class="acwr-bar-cell"><div class="acwr-bar-wrap"><div class="acwr-bar ${barCls}" style="width:${barW}%"></div></div></td>
+    </tr>`;
+  });
+  t.innerHTML=h+'</tbody>';
+
+  // Load chart (latest round player distances + ACWR color coding)
+  const lastRoundData=RAW[RAW.length-1];
+  if(lastRoundData){
+    const svg=document.getElementById('load-chart');
+    const W=800,H=320,pd={t:20,r:20,b:80,l:55};
+    const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+    const players12=lastRoundData.players.filter(p=>p.min>=20 && p.name!=='합계' && p.name!=='평균')
+      .sort((a,b)=>b.dist-a.dist);
+    const n=players12.length;
+    const mx=max(players12.map(p=>p.dist))*1.1;
+    const bw=cw/n*0.65;
+    let html='';
+
+    // Grid
+    [0,3000,6000,9000,12000].forEach(v=>{
+      const y=pd.t+ch-ch*v/mx;
+      html+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+      html+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${(v/1000).toFixed(0)}k</text>`;
+    });
+
+    players12.forEach((p,i)=>{
+      const x=pd.l+i*(cw/n)+(cw/n-bw)/2;
+      const bh=ch*(p.dist/mx);
+      const y=pd.t+ch-bh;
+      const acwrEntry=acwrData.find(a=>a.name===p.name);
+      const col=!acwrEntry?ACC:acwrEntry.acwr>=1.5?'#f87171':acwrEntry.acwr>=1.3?'#fbbf24':'#06d6a0';
+      const posCol=POS_COLORS[p.pos]||'#64748b';
+      html+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity=".8" rx="3"/>`;
+      html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-3).toFixed(0)}" font-size="8" fill="${col}" text-anchor="middle">${fmtK(p.dist)}</text>`;
+      // ACWR label
+      if(acwrEntry){
+        html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+14).toFixed(0)}" font-size="8.5" font-weight="700" fill="${col}" text-anchor="middle">${acwrEntry.acwr.toFixed(2)}</text>`;
+      }
+      html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+27).toFixed(0)}" font-size="9" fill="${posCol}" text-anchor="middle" font-weight="700">${p.name}</text>`;
+      html+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+40).toFixed(0)}" font-size="8.5" fill="${posCol}" text-anchor="middle">${p.min.toFixed(0)}분</text>`;
+    });
+    svg.innerHTML=html;
+  }
+
+  // Load insights
+  const danger=acwrData.filter(p=>p.acwr&&p.acwr>=1.5);
+  const caution=acwrData.filter(p=>p.acwr&&p.acwr>=1.3&&p.acwr<1.5);
+  const low=acwrData.filter(p=>p.acwr&&p.acwr<0.8);
+  const insData=[
+    danger.length>0?{tag:'tag-danger',t:'과부하 선수',body:`<strong>${danger.map(p=>p.name).join(', ')}</strong> — ACWR 1.5 초과. 부상 위험 2–4배 증가. 훈련 강도 즉시 조정 권장 (Gabbett, 2016)`}:null,
+    caution.length>0?{tag:'tag-warn',t:'주의 구간',body:`<strong>${caution.map(p=>p.name).join(', ')}</strong> — ACWR 1.3–1.5. 급성 부하 증가 중. 피로도 모니터링 필요.`}:null,
+    low.length>0?{tag:'tag-key',t:'저부하 선수',body:`<strong>${low.map(p=>p.name).join(', ')}</strong> — ACWR 0.8 미만. 언더트레이닝 또는 부상 복귀 후 신중한 재활.`}:null,
+    {tag:'tag-ok',t:'ACWR 활용법',body:'ACWR은 훈련 부하 관리의 핵심 도구. 급격한 부하 증가 방지, 주 1–2 경기 시 만성 부하 유지가 부상 예방의 핵심. (Hulin et al., 2016)'},
+  ].filter(Boolean);
+  const igrid=document.getElementById('load-insights');
+  insData.forEach(ins=>{
+    const c=document.createElement('div');c.className='ins';
+    c.innerHTML=`<span class="tag ${ins.tag}">${ins.t}</span><p>${ins.body}</p>`;
+    igrid.appendChild(c);
+  });
+}
+
+// ── TAB 4: PROFILE ────────────────────────────────────────
+function renderProfile(){
+  // Position averages (full game players only, min>=75)
+  const posGroups={CB:[],CM:[],FB:[],WF:[],CF:[]};
+  RAW.forEach(rnd=>{
+    rnd.players.forEach(p=>{
+      if(p.min<75)return;
+      const pos=p.pos in posGroups?p.pos:null;
+      if(!pos)return;
+      posGroups[pos].push(p);
+    });
+  });
+
+  const posAvg={};
+  Object.entries(posGroups).forEach(([pos,players])=>{
+    if(!players.length)return;
+    posAvg[pos]={
+      dist:avg(players.map(p=>p.dist)),
+      hsr_r:avg(players.map(p=>p.hsr_r)),
+      spr_r:avg(players.map(p=>p.spr_r)),
+      acc:avg(players.map(p=>p.acc)),
+      vmax:avg(players.map(p=>p.vmax)),
+      dpm:avg(players.map(p=>p.dpm)),
+    };
+  });
+
+  // Radar
+  const svg=document.getElementById('pos-radar');
+  const AXES=[
+    {k:'dist',  lbl:'이동거리', mn:7000, mx:13000, lb:false},
+    {k:'hsr_r', lbl:'HSR Ratio', mn:2, mx:12, lb:false},
+    {k:'spr_r', lbl:'Sprint Ratio', mn:0, mx:4, lb:false},
+    {k:'acc',   lbl:'가속 횟수', mn:10, mx:80, lb:false},
+    {k:'vmax',  lbl:'최고 속도', mn:26, mx:34, lb:false},
+    {k:'dpm',   lbl:'분당 거리', mn:90, mx:135, lb:false},
+  ];
+  const cx=200,cy=155,r=110,n=AXES.length;
+  function ax(i,rr){const a=(i*2*Math.PI/n)-Math.PI/2;return[cx+rr*Math.cos(a),cy+rr*Math.sin(a)];}
+  function ns(v,mn,mx){return Math.max(0,Math.min(1,(v-mn)/(mx-mn)));}
+  let svgH='';
+  [.25,.5,.75,1].forEach(p=>{
+    const pts=AXES.map((_,i)=>ax(i,r*p).map(v=>v.toFixed(1)).join(',')).join(' ');
+    svgH+=`<polygon points="${pts}" fill="none" stroke="#e2e8f0" stroke-width="${p===1?1:.5}"/>`;
+  });
+  AXES.forEach((_,i)=>{const[x,y]=ax(i,r);svgH+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`;});
+
+  Object.entries(posAvg).forEach(([pos,vals])=>{
+    const col=POS_COLORS[pos]||'#64748b';
+    const pts=AXES.map((a,i)=>{
+      const s=ns(vals[a.k]||0,a.mn,a.mx);
+      const[x,y]=ax(i,r*s);
+      return`${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    svgH+=`<polygon points="${pts}" fill="${col}" fill-opacity=".1" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
+    AXES.forEach((a,i)=>{
+      const s=ns(vals[a.k]||0,a.mn,a.mx);
+      const[x,y]=ax(i,r*s);
+      svgH+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${col}" stroke="#ffffff" stroke-width="1.5"/>`;
+    });
+  });
+
+  AXES.forEach((a,i)=>{const[x,y]=ax(i,r+20);const anc=x<cx-5?'end':x>cx+5?'start':'middle';svgH+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="10.5" font-weight="700" text-anchor="${anc}" dominant-baseline="middle" fill="#94a3b8">${a.lbl}</text>`;});
+  svg.innerHTML=svgH;
+
+  // Radar legend
+  const leg=document.getElementById('pos-radar-legend');
+  leg.innerHTML='<div style="font-size:.76rem;color:var(--muted);margin-bottom:10px">포지션별 평균 피지컬 프로필<br><small>(75분↑ 출전 경기 기준 정규화)</small></div>';
+  Object.entries(posAvg).forEach(([pos,vals])=>{
+    const col=POS_COLORS[pos]||'#64748b';
+    leg.innerHTML+=`<div style="display:flex;gap:8px;align-items:center;padding:8px;background:var(--card2);border-radius:7px;margin-bottom:6px;border-left:3px solid ${col}">
+      <span style="font-size:.8rem;font-weight:900;color:${col};min-width:30px">${pos}</span>
+      <div style="font-size:.74rem;color:var(--muted);line-height:1.5">
+        ${fmtK(vals.dist)} · HSR ${vals.hsr_r.toFixed(1)}% · SPR ${vals.spr_r.toFixed(1)}% · 최고속 ${vals.vmax.toFixed(1)}km/h
+      </div>
+    </div>`;
+  });
+
+  // Speed zone chart
+  const zoneSvg=document.getElementById('zone-chart');
+  const posOrder=['CB','CM','FB','WF','CF'];
+  const zoneData=posOrder.map(pos=>{
+    const players=posGroups[pos]||[];
+    if(!players.length)return null;
+    const total=avg(players.map(p=>p.dist));
+    const zs=[
+      avg(players.map(p=>p.z1)),avg(players.map(p=>p.z2)),avg(players.map(p=>p.z3)),
+      avg(players.map(p=>p.z4)),avg(players.map(p=>p.z5)),
+    ];
+    const tz=zs.reduce((a,b)=>a+b,0)||1;
+    return {pos,total,z:zs.map(v=>v/tz*100)};
+  }).filter(Boolean);
+
+  const ZW=800,ZH=280,zpd={t:20,r:20,b:60,l:60};
+  const zcw=ZW-zpd.l-zpd.r,zch=ZH-zpd.t-zpd.b;
+  const zbw=zcw/posOrder.length*0.6,zgap=zcw/posOrder.length;
+  let zh='';
+  [0,25,50,75,100].forEach(v=>{
+    const y=zpd.t+zch-v/100*zch;
+    zh+=`<line x1="${zpd.l}" y1="${y.toFixed(0)}" x2="${ZW-zpd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+    zh+=`<text x="${zpd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${v}%</text>`;
+  });
+
+  zoneData.forEach((pd,i)=>{
+    const x=zpd.l+i*zgap+(zgap-zbw)/2;
+    let cumH=0;
+    pd.z.forEach((pct,zi)=>{
+      const bh=zch*pct/100;
+      const y=zpd.t+zch-cumH-bh;
+      zh+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${zbw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${ZONE_COLS[zi]}" rx="${zi===0?'0 0 3 3':'0'}"/>`;
+      if(bh>14){zh+=`<text x="${(x+zbw/2).toFixed(1)}" y="${(y+bh/2+4).toFixed(0)}" font-size="8.5" fill="rgba(255,255,255,.8)" text-anchor="middle">${pct.toFixed(0)}%</text>`;}
+      cumH+=bh;
+    });
+    const posCol=POS_COLORS[pd.pos]||'#64748b';
+    zh+=`<text x="${(x+zbw/2).toFixed(1)}" y="${(ZH-zpd.b+20).toFixed(0)}" font-size="11" font-weight="900" fill="${posCol}" text-anchor="middle">${pd.pos}</text>`;
+    zh+=`<text x="${(x+zbw/2).toFixed(1)}" y="${(ZH-zpd.b+35).toFixed(0)}" font-size="8.5" fill="var(--muted)" text-anchor="middle">${fmtK(pd.total)}/90</text>`;
+  });
+  zoneSvg.innerHTML=zh;
+
+  // Zone legend
+  const zleg=document.getElementById('zone-legend');
+  ['Z1 걷기(≤7km/h)','Z2 조깅(7–14)','Z3 달리기(14–21)','Z4 HSR(21–25)','Z5 Sprint(≥25)'].forEach((lbl,i)=>{
+    const d=document.createElement('span');d.className='zl-item';
+    d.innerHTML=`<span class="zl-dot" style="background:${ZONE_COLS[i]}"></span>${lbl}`;
+    zleg.appendChild(d);
+  });
+
+  // Leaderboards
+  function renderLeaderboard(id, entries, valFmt){
+    const con=document.getElementById(id);
+    entries.slice(0,10).forEach((e,i)=>{
+      const maxVal=entries[0].val;
+      const bw=(e.val/maxVal*100).toFixed(0);
+      const rankCls=['r1','r2','r3'][i]||'rx';
+      const posCol=POS_COLORS[e.pos]||'#64748b';
+      con.innerHTML+=`<div class="lb-row">
+        <span class="lb-rank ${rankCls}">${i+1}</span>
+        <span class="lb-name">${e.name}</span>
+        <span class="lb-pos" style="color:${posCol}">${e.pos}</span>
+        <span style="font-size:.72rem;color:var(--muted);margin-left:4px">${e.rnd}</span>
+        <span class="lb-val">${valFmt(e.val)}</span>
+        <div class="lb-bar-wrap"><div class="lb-bar" style="width:${bw}%"></div></div>
+      </div>`;
+    });
+  }
+
+  const vmaxLb=[], sprLb=[], distLb=[], hsrrLb=[];
+  RAW.forEach(rnd=>{
+    rnd.players.forEach(p=>{
+      if(!p.name||p.name==='합계'||p.name==='평균')return;
+      vmaxLb.push({name:p.name,pos:p.pos,rnd:rnd.r,val:p.vmax});
+      sprLb.push({name:p.name,pos:p.pos,rnd:rnd.r,val:p.spr});
+      distLb.push({name:p.name,pos:p.pos,rnd:rnd.r,val:p.dist});
+      if(p.min>=75) hsrrLb.push({name:p.name,pos:p.pos,rnd:rnd.r,val:p.hsr_r});
+    });
+  });
+
+  renderLeaderboard('lb-vmax',vmaxLb.sort((a,b)=>b.val-a.val),v=>v.toFixed(1)+'km/h');
+  renderLeaderboard('lb-hsrr',hsrrLb.sort((a,b)=>b.val-a.val),v=>v.toFixed(1)+'%');
+  renderLeaderboard('lb-spr',sprLb.sort((a,b)=>b.val-a.val),v=>Math.round(v)+'m');
+  renderLeaderboard('lb-dist',distLb.sort((a,b)=>b.val-a.val),v=>fmtK(v));
+}
+
+
+// ── PLAYER COMMENTS ───────────────────────────────────────────
+function computePlayerComments(pdata){
+  const comments=[];
+  const sortedRounds=ROUNDS_ORDER.filter(r=>pdata.rounds[r]&&pdata.rounds[r].min>=20);
+  if(sortedRounds.length<3)return[{cls:'cb-info',lbl:'데이터부족',txt:'출전 경기 수 부족 (분석 기준: 20분 이상 3경기 이상).'}];
+  const games=sortedRounds.map(r=>pdata.rounds[r]);
+  const spr90=games.map(g=>g.spr/g.min*90);
+  const dist90=games.map(g=>g.dist/g.min*90);
+  const hsr90=games.map(g=>g.hsr/g.min*90);
+  const hsr_r=games.map(g=>g.hsr_r);
+  const vmaxArr=games.map(g=>g.vmax);
+  const avgArr=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
+  const halfIdx=Math.max(1,Math.floor(games.length/2));
+  const trendPct=arr=>{const f=avgArr(arr.slice(0,halfIdx));return f>0?(avgArr(arr.slice(halfIdx))-f)/f*100:0;};
+  const recentVsAll=arr=>{const a=avgArr(arr);const r3=avgArr(arr.slice(-3));return a>0?(r3-a)/a*100:0;};
+  const spr90Trend=trendPct(spr90);
+  const dist90Trend=trendPct(dist90);
+  const hsrTrend=trendPct(hsr90);
+  const vmaxTrend=trendPct(vmaxArr);
+  const spr90Recent=recentVsAll(spr90);
+  const dist90Recent=recentVsAll(dist90);
+  // Sprint trend
+  if(spr90Trend<-30){
+    comments.push({cls:'cb-danger',lbl:'위험',txt:`Sprint/90 시즌 전반 대비 <strong>${Math.abs(spr90Trend).toFixed(0)}% 급감</strong>. 신경근 피로·부상 전조 가능성. 즉각 모니터링 필요.`});
+  }else if(spr90Trend<-15){
+    comments.push({cls:'cb-warn',lbl:'Sprint감소',txt:`Sprint/90 시즌 전반 대비 <strong>${Math.abs(spr90Trend).toFixed(0)}% 감소</strong> 추세. 누적 피로 관리 필요.`});
+  }else if(spr90Trend>20){
+    comments.push({cls:'cb-ok',lbl:'Sprint향상',txt:`Sprint/90 시즌 전반 대비 <strong>${spr90Trend.toFixed(0)}% 향상</strong>. 스프린트 역량 성장 중.`});
+  }
+  if(spr90Recent<-25&&spr90Trend>-15){
+    comments.push({cls:'cb-warn',lbl:'최근하락',txt:`최근 3경기 Sprint/90이 시즌 평균 대비 <strong>${Math.abs(spr90Recent).toFixed(0)}% 하락</strong>. 최근 폼 저하 주목.`});
+  }
+  // Distance trend
+  if(dist90Trend<-12){
+    comments.push({cls:'cb-warn',lbl:'거리감소',txt:`이동거리/90 시즌 전반 대비 <strong>${Math.abs(dist90Trend).toFixed(0)}% 감소</strong>. 전반적 활동량 저하.`});
+  }else if(dist90Recent<-15){
+    comments.push({cls:'cb-warn',lbl:'최근거리↓',txt:`최근 3경기 이동거리/90이 시즌 평균 대비 <strong>${Math.abs(dist90Recent).toFixed(0)}% 하락</strong>.`});
+  }
+  // Vmax trend
+  if(vmaxTrend<-7){
+    comments.push({cls:'cb-warn',lbl:'속도저하',txt:`최고 속도 시즌 전반 대비 <strong>${Math.abs(vmaxTrend).toFixed(0)}% 하락</strong>. 스피드 저하 모니터링 필요.`});
+  }
+  // Benchmark
+  const posBM={CB:8700,FB:10800,CM:11500,WF:9500,CF:9400,DM:10000};
+  const posSprBM={CB:100,FB:200,CM:150,WF:270,CF:180,DM:120};
+  const posHsrBM={CB:6,FB:9,CM:7.5,WF:10,CF:7,DM:6};
+  const bm=posBM[pdata.pos]||9500;
+  const sprBM=posSprBM[pdata.pos]||300;
+  const hsrBM=posHsrBM[pdata.pos]||7;
+  const avgDist90=avgArr(dist90);
+  const avgSpr90=avgArr(spr90);
+  const avgHsrR=avgArr(hsr_r);
+  if(avgDist90<bm*0.85){
+    comments.push({cls:'cb-warn',lbl:'거리기준미달',txt:`이동거리/90 평균 <strong>${Math.round(avgDist90)}m</strong>가 포지션 기준 ${bm}m 대비 <strong>${((1-avgDist90/bm)*100).toFixed(0)}% 미달</strong>.`});
+  }
+  if(pdata.pos!=='CB'&&avgSpr90<sprBM*0.55){
+    comments.push({cls:'cb-danger',lbl:'Sprint부족',txt:`Sprint/90 평균 <strong>${Math.round(avgSpr90)}m</strong>가 포지션 기준 ${sprBM}m에 크게 못 미침. 고강도 스프린트 집중 훈련 필요.`});
+  }
+  if(avgHsrR<hsrBM*0.7){
+    comments.push({cls:'cb-warn',lbl:'HSR부족',txt:`HSR Ratio 평균 <strong>${avgHsrR.toFixed(1)}%</strong>가 포지션 기준 ${hsrBM}% 미달. 고속 활동 비중 부족.`});
+  }else if(hsrTrend<-20){
+    comments.push({cls:'cb-warn',lbl:'HSR감소',txt:`HSR 거리/90 시즌 전반 대비 <strong>${Math.abs(hsrTrend).toFixed(0)}% 감소</strong>. 고속 활동 감소 추세.`});
+  }
+  if(comments.length===0){
+    comments.push({cls:'cb-ok',lbl:'양호',txt:'주요 지표 안정적. 현재 훈련 부하 및 컨디션 관리 수준 유지 권장.'});
+  }
+  return comments;
+}
+
+// ── RESULT ANALYSIS ───────────────────────────────────────────
+function renderResultTab(){
+  const groups={W:[],D:[],L:[]};
+  RAW.forEach(rnd=>{if(groups[rnd.result])groups[rnd.result].push(rnd);});
+
+  function groupStats(rounds){
+    if(!rounds.length)return null;
+    const stats=rounds.map(rnd=>{
+      const starters=rnd.players.filter(p=>p.min>=45);
+      if(!starters.length)return null;
+      return{
+        dist:starters.reduce((s,p)=>s+p.dist,0),
+        hsr:starters.reduce((s,p)=>s+p.hsr,0),
+        spr:starters.reduce((s,p)=>s+p.spr,0),
+        hsr_r:avg(starters.map(p=>p.hsr_r)),
+        vmax:max(starters.map(p=>p.vmax)),
+        acc:starters.reduce((s,p)=>s+p.acc,0),
+      };
+    }).filter(Boolean);
+    if(!stats.length)return null;
+    return{
+      count:rounds.length,rounds,
+      dist:avg(stats.map(s=>s.dist))/1000,
+      hsr:avg(stats.map(s=>s.hsr)),
+      spr:avg(stats.map(s=>s.spr)),
+      hsr_r:avg(stats.map(s=>s.hsr_r)),
+      vmax:avg(stats.map(s=>s.vmax)),
+      acc:avg(stats.map(s=>s.acc)),
+    };
+  }
+
+  const wS=groupStats(groups.W);
+  const dS=groupStats(groups.D);
+  const lS=groupStats(groups.L);
+
+  // Cards
+  const resNames={W:'승리',D:'무승부',L:'패배'};
+  const container=document.getElementById('result-cards');
+  [['W',wS],['D',dS],['L',lS]].forEach(([key,s])=>{
+    if(!s){
+      const card=document.createElement('div');
+      card.className=`res-card ${key}`;
+      card.innerHTML=`<h4 class="${key}">${resNames[key]}</h4><div class="res-metric"><span class="rlbl">경기 없음</span></div>`;
+      container.appendChild(card);return;
+    }
+    const card=document.createElement('div');
+    card.className=`res-card ${key}`;
+    card.innerHTML=`
+      <h4 class="${key}">${resNames[key]} <span style="font-size:.75rem;font-weight:600">(${s.count}경기)</span></h4>
+      <div class="res-metric"><span class="rlbl">팀 총 이동거리</span><span class="rval">${s.dist.toFixed(1)}km</span></div>
+      <div class="res-metric"><span class="rlbl">HSR 거리</span><span class="rval">${Math.round(s.hsr).toLocaleString()}m</span></div>
+      <div class="res-metric"><span class="rlbl">Sprint 거리</span><span class="rval">${Math.round(s.spr).toLocaleString()}m</span></div>
+      <div class="res-metric"><span class="rlbl">HSR Ratio</span><span class="rval">${s.hsr_r.toFixed(1)}%</span></div>
+      <div class="res-metric"><span class="rlbl">팀 최고 속도</span><span class="rval">${s.vmax.toFixed(1)}km/h</span></div>
+      <div class="res-metric"><span class="rlbl">가속 횟수</span><span class="rval">${Math.round(s.acc)}회</span></div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Comparison bar charts
+  function resBar(svgId,vals){
+    const svg=document.getElementById(svgId);if(!svg)return;
+    const W=460,H=200,pd={t:30,r:20,b:55,l:60};
+    const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+    const mx=max(vals.map(v=>v.val))*1.25||1;
+    const n=vals.length,bw=cw/n*0.45;
+    const COL={W:'var(--win)',D:'var(--draw)',L:'var(--loss)'};
+    const NM={W:'승리',D:'무승부',L:'패배'};
+    let h='';
+    [0,.25,.5,.75,1].forEach(f=>{
+      const y=pd.t+ch*(1-f);
+      const v=mx*f;
+      const lbl=v>=1000?(v/1000).toFixed(1)+'k':v>=10?Math.round(v):v.toFixed(1);
+      h+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+      h+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${lbl}</text>`;
+    });
+    vals.forEach((item,i)=>{
+      const x=pd.l+(i+0.5)*(cw/n)-(bw/2);
+      const bh=item.val/mx*ch;
+      const y=pd.t+ch-bh;
+      h+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${COL[item.key]}" rx="4"/>`;
+      const lbl=item.val>=1000?(item.val/1000).toFixed(1)+'k':item.val>=10?Math.round(item.val):item.val.toFixed(1);
+      h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-6).toFixed(0)}" font-size="9.5" font-weight="900" fill="${COL[item.key]}" text-anchor="middle">${lbl}</text>`;
+      h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+16).toFixed(0)}" font-size="10" font-weight="800" fill="${COL[item.key]}" text-anchor="middle">${NM[item.key]}</text>`;
+      h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+29).toFixed(0)}" font-size="8.5" fill="var(--muted)" text-anchor="middle">${item.count}경기</text>`;
+    });
+    svg.innerHTML=h;
+  }
+
+  const rk=[['W',wS],['D',dS],['L',lS]].filter(([,s])=>s);
+  resBar('res-dist-chart',rk.map(([k,s])=>({key:k,val:s.dist,count:s.count})));
+  resBar('res-hsr-chart',rk.map(([k,s])=>({key:k,val:s.hsr,count:s.count})));
+  resBar('res-spr-chart',rk.map(([k,s])=>({key:k,val:s.spr,count:s.count})));
+  resBar('res-hsrr-chart',rk.map(([k,s])=>({key:k,val:s.hsr_r,count:s.count})));
+
+  // Scatter: per-round dist colored by result
+  const scSvg=document.getElementById('res-scatter');
+  if(scSvg){
+    const W=800,H=300,pd={t:25,r:20,b:50,l:65};
+    const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+    const COL={W:'var(--win)',D:'var(--draw)',L:'var(--loss)'};
+    const rd=RAW.map(rnd=>{
+      const st=rnd.players.filter(p=>p.min>=45);
+      if(!st.length)return null;
+      return{r:rnd.r,result:rnd.result,opp:rnd.opp,sc:rnd.sc,dist:st.reduce((s,p)=>s+p.dist,0)/1000};
+    }).filter(Boolean);
+    const n=rd.length;
+    const dists=rd.map(d=>d.dist);
+    const minD=min(dists)*0.95,maxD=max(dists)*1.05;
+    const bw=cw/n*0.65;
+    let h='';
+    [0,.25,.5,.75,1].forEach(f=>{
+      const v=minD+(maxD-minD)*f;
+      const y=pd.t+ch*(1-f);
+      h+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+      h+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#64748b" text-anchor="end">${v.toFixed(0)}</text>`;
+    });
+    rd.forEach((d,i)=>{
+      const x=pd.l+(i+0.5)*(cw/n)-(bw/2);
+      const yPct=(d.dist-minD)/(maxD-minD);
+      const bh=Math.max(4,yPct*ch);
+      const y=pd.t+ch-bh;
+      h+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${COL[d.result]}" rx="3" opacity=".85"/>`;
+      h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(pd.t+ch+14).toFixed(0)}" font-size="8.5" fill="var(--muted)" text-anchor="middle">${d.r}</text>`;
+      h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(0)}" font-size="8" fill="${COL[d.result]}" text-anchor="middle" font-weight="700">${d.dist.toFixed(0)}</text>`;
+    });
+    // legend
+    [{key:'W',lbl:'승리'},{key:'D',lbl:'무승부'},{key:'L',lbl:'패배'}].forEach((item,i)=>{
+      const x=pd.l+i*80;
+      h+=`<rect x="${x}" y="${H-12}" width="10" height="10" fill="${COL[item.key]}" rx="2"/>`;
+      h+=`<text x="${x+14}" y="${H-3}" font-size="10" fill="${COL[item.key]}" font-weight="700">${item.lbl}</text>`;
+    });
+    scSvg.innerHTML=h;
+  }
+
+  // Insights
+  const igrid=document.getElementById('result-insights');
+  const ins=[];
+  if(wS&&lS){
+    const dd=((wS.dist-lS.dist)/lS.dist*100);
+    ins.push({tag:Math.abs(dd)>5?'tag-key':'tag-ok',t:'이동거리 & 결과',
+      body:`승리 <strong>${wS.dist.toFixed(1)}km</strong> vs 패배 <strong>${lS.dist.toFixed(1)}km</strong> (차이 ${dd>0?'+':''}${dd.toFixed(1)}%). ${Math.abs(dd)>5?'이동거리가 승패에 유의미한 차이.':'이동거리와 승패 상관관계 낮음.'}`});
+    const hd=((wS.hsr-lS.hsr)/lS.hsr*100);
+    ins.push({tag:'tag-key',t:'HSR & 결과',
+      body:`승리 HSR <strong>${Math.round(wS.hsr).toLocaleString()}m</strong> vs 패배 <strong>${Math.round(lS.hsr).toLocaleString()}m</strong> (${hd>0?'+':''}${hd.toFixed(1)}%). 고강도 달리기와 승패 연관성.`});
+    const sd=((wS.spr-lS.spr)/lS.spr*100);
+    ins.push({tag:Math.abs(sd)>15?'tag-key':'tag-ok',t:'Sprint & 결과',
+      body:`승리 Sprint <strong>${Math.round(wS.spr)}m</strong> vs 패배 <strong>${Math.round(lS.spr)}m</strong> (${sd>0?'+':''}${sd.toFixed(1)}%). ${Math.abs(sd)>15?'스프린트 거리가 결과에 영향.':'스프린트와 승패 직접 연관성 낮음.'}`});
+  }
+  if(wS) ins.push({tag:'tag-ok',t:'승리 패턴',
+    body:`${wS.count}경기 승리. 평균 HSR Ratio <strong>${wS.hsr_r.toFixed(1)}%</strong>, 팀 최고속도 <strong>${wS.vmax.toFixed(1)}km/h</strong>. 고강도 유지가 승리 조건.`});
+  if(lS) ins.push({tag:lS.count>(wS?.count||0)?'tag-danger':'tag-warn',t:'패배 패턴',
+    body:`${lS.count}경기 패배. 패배 시 Sprint 평균 <strong>${Math.round(lS.spr)}m</strong>, HSR Ratio <strong>${lS.hsr_r.toFixed(1)}%</strong>. 고강도 활동량 저하 시 패배 경향.`});
+  ins.forEach(i=>{
+    const c=document.createElement('div');c.className='ins';
+    c.innerHTML=`<span class="tag ${i.tag}">${i.t}</span><p>${i.body}</p>`;
+    igrid.appendChild(c);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────
+renderTeam();
+renderPlayerTab();
+renderLoad();
+renderProfile();
+renderResultTab();
+</script>
+</body>
+</html>
