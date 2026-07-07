@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026 FIFA World Cup Football Intelligence Workspace</title>
+  <link rel="stylesheet" href="assets/workspace.css?v=20260705002952">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">FI</div>
+      <div><strong data-i18n="app_title">Football Intelligence Workspace</strong><span><span data-i18n="data_updated">Last generated</span>: <time id="brandGeneratedAt">-</time></span></div>
+    </div>
+    <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Collapse sidebar">‹</button>
+    <nav class="side-nav" aria-label="Workspace navigation">
+      <p data-i18n="nav_overview">Overview</p>
+      <a class="active" href="#dashboard-view" data-view-target="dashboard"><span class="nav-icon">⌂</span><span data-i18n="dashboard">Dashboard</span></a>
+      <p data-i18n="nav_explorer">Explorer</p>
+      <a href="#team-view" data-view-target="team"><span class="nav-icon">◇</span><span data-i18n="team_explorer">Team Explorer</span></a>
+      <a href="#match-view" data-view-target="match"><span class="nav-icon">VS</span><span data-i18n="match_explorer">Match Explorer</span></a>
+      <a href="#player-view" data-view-target="player"><span class="nav-icon">◎</span><span data-i18n="player_explorer">Player Explorer</span></a>
+      <a href="#metric-view" data-view-target="metric"><span class="nav-icon">Σ</span><span data-i18n="metric_explorer">Metric Explorer</span></a>
+      <a href="#team-view" data-view-target="team"><span class="nav-icon">▥</span><span data-i18n="benchmark_explorer">Benchmark Explorer</span></a>
+      <p data-i18n="nav_analysis">Analysis</p>
+      <a href="#match-view" data-view-target="match"><span class="nav-icon">↔</span><span data-i18n="compare">Compare</span></a>
+      <a href="#metric-view" data-view-target="metric"><span class="nav-icon">⌁</span><span data-i18n="correlation">Correlation</span></a>
+      <a href="#team-view" data-view-target="team"><span class="nav-icon">◫</span><span data-i18n="kpi_dashboard">KPI Dashboard</span></a>
+      <p data-i18n="nav_knowledge">Knowledge</p>
+      <a href="#knowledge-view" data-view-target="knowledge"><span class="nav-icon">□</span><span data-i18n="knowledge_base">Knowledge Base</span></a>
+      <a href="#knowledge-view" data-view-target="knowledge"><span class="nav-icon">▤</span><span data-i18n="reports">Reports</span></a>
+      <p data-i18n="nav_data">Data</p>
+      <a href="#knowledge-view" data-view-target="knowledge"><span class="nav-icon">⌘</span><span data-i18n="data_dictionary">Data Dictionary</span></a>
+      <a href="#knowledge-view" data-view-target="knowledge"><span class="nav-icon">⚙</span><span data-i18n="settings">Settings</span></a>
+    </nav>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div class="title-block">
+        <h1>2026 FIFA World Cup</h1>
+        <span><span data-i18n="data_updated">Last generated</span>: <time id="topGeneratedAt">-</time></span>
+      </div>
+      <div class="top-controls">
+        <label class="select-shell"><span data-i18n="tournament">Tournament</span><select id="tournamentSelect"><option>2026 World Cup</option></select></label>
+        <label class="select-shell"><span data-i18n="language">Language</span><select id="languageSelect"><option value="ko" selected>Korean</option><option value="en">English</option><option value="ja">Japanese</option></select></label>
+        <label class="search-shell"><span data-i18n="search_label">Search</span><input id="globalSearch" type="search" data-i18n-placeholder="search" placeholder="팀, 경기, 지표 검색"></label>
+        <button id="exportPdfButton" class="export-button" type="button" disabled data-i18n="export_pdf_coming_soon">Export PDF — Coming Soon</button>
+        <button id="themeToggle" class="icon-button" type="button" data-i18n-title="theme" title="Theme">☾</button>
+      </div>
+    </header>
+
+    <section id="dashboard" class="subnav">
+      <a class="active" href="#dashboard-view" data-view-target="dashboard" data-i18n="overview">Overview</a>
+      <a href="#team-view" data-view-target="team" data-i18n="team_explorer">Team</a>
+      <a href="#match-view" data-view-target="match" data-i18n="matches">Matches</a>
+      <a href="#player-view" data-view-target="player" data-i18n="players">Players</a>
+      <a href="#metric-view" data-view-target="metric" data-i18n="metric_explorer">Metrics</a>
+      <a href="#knowledge-view" data-view-target="knowledge" data-i18n="knowledge_base">Knowledge</a>
+    </section>
+
+    <section id="dashboard-view" class="workspace-view active">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="dashboard">Dashboard</p><h2 data-i18n="dashboard_title">Team intelligence overview</h2></div>
+      </div>
+      <div class="dashboard-grid dashboard-home report-section" data-report-section="team_dashboard">
+        <article class="card report-block team-card" data-report-block="team_overview">
+          <div class="team-head">
+            <div id="teamFlag" class="flag"></div>
+            <div>
+              <label class="field-label" for="teamSelect" data-i18n="select_team">Select team</label>
+              <select id="teamSelect" class="hero-select"></select>
+            </div>
+          </div>
+          <div class="team-meta">
+            <div><span data-i18n="fifa_ranking">FIFA Ranking</span><strong id="fifaRanking">-</strong></div>
+            <div><span data-i18n="confederation">Confederation</span><strong id="confederation">-</strong></div>
+          </div>
+          <div class="score-strip">
+            <div><span data-i18n="matches">Matches</span><strong id="teamMatchesCount">0</strong></div>
+            <div><span data-i18n="w_d_l">W-D-L</span><strong id="teamWdl">0-0-0</strong></div>
+            <div><span data-i18n="goals_for">Goals For</span><strong id="teamGf">0</strong></div>
+            <div><span data-i18n="goals_against">Goals Against</span><strong id="teamGa">0</strong></div>
+            <div><span data-i18n="points">Points</span><strong id="teamPoints">0</strong></div>
+          </div>
+          <div class="score-cards">
+            <div class="score-card"><span data-i18n="performance_score">Performance Score</span><strong id="performanceScore">-</strong><small id="performanceRank">-</small><canvas id="performanceSpark" width="180" height="44"></canvas></div>
+            <div class="score-card"><span data-i18n="physical_score">Physical Score</span><strong id="physicalScore">-</strong><small id="physicalRank">-</small><canvas id="physicalSpark" width="180" height="44"></canvas></div>
+            <div class="score-card"><span data-i18n="tactical_score">Tactical Score</span><strong id="tacticalScore">-</strong><small id="tacticalRank">-</small><canvas id="tacticalSpark" width="180" height="44"></canvas></div>
+          </div>
+        </article>
+        <article class="card report-block radar-card" data-report-block="key_metrics_radar">
+          <div class="card-title"><h2><span data-i18n="key_metrics">Key Metrics</span> <small>(<span data-i18n="vs_wc_avg">vs World Cup Avg</span>)</small></h2></div>
+          <canvas id="radarCanvas" width="430" height="330"></canvas>
+        </article>
+        <article class="card report-block recent-card" data-report-block="recent_matches">
+          <div class="card-title"><h2 data-i18n="recent_matches">Recent Matches</h2><a href="#match-view" data-view-target="match" data-i18n="view_all">View All</a></div>
+          <div id="recentMatches"></div>
+        </article>
+        <article class="card report-block" data-report-block="dashboard_insights">
+          <div class="card-title"><h2 data-i18n="key_insights">Key Insights</h2></div>
+          <div id="keyInsights"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="team-view" class="workspace-view">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="team_explorer">Team Explorer</p><h2 data-i18n="team_view_title">Understand one team</h2></div>
+      </div>
+      <div class="team-view-grid report-section" data-report-section="full_team_report">
+        <article class="card report-block" data-report-block="team_matches"><div class="card-title"><h2 data-i18n="matches">Matches</h2></div><div id="teamMatchList"></div></article>
+        <article class="card report-block quick-card" data-report-block="physical_vs_average"><div class="card-title"><h2><span data-i18n="quick_stats">Quick Stats</span> <small>(<span data-i18n="vs_wc_avg">vs World Cup Avg</span>)</small></h2></div><div id="quickStats"></div></article>
+        <article class="card report-block" data-report-block="performance_vs_average"><div class="card-title"><h2 data-i18n="performance">Performance</h2></div><div id="teamPerformanceProfile"></div></article>
+        <article class="card report-block" data-report-block="team_physical_by_match"><div class="card-title"><h2 data-i18n="team_physical_by_match">Team Physical by Match</h2></div><canvas id="teamPhysicalTrendCanvas" width="720" height="300"></canvas><div id="teamPhysicalByMatch"></div></article>
+        <article class="card report-block" data-report-block="team_benchmark"><div class="card-title"><h2 data-i18n="team_benchmark">Team Benchmark</h2><label class="inline-select"><span data-i18n="category">Category</span><select id="benchmarkCategory"></select></label></div><div id="teamBenchmark"></div></article>
+        <article class="card report-block" data-report-block="physical_profile"><div class="card-title"><h2><span data-i18n="physical">Physical</span> <small>(<span data-i18n="vs_wc_avg">vs World Cup Avg</span>)</small></h2></div><canvas id="physicalProfileCanvas" width="1080" height="260"></canvas><div id="physicalProfile"></div></article>
+        <article class="card report-block" data-report-block="strengths_weaknesses"><div class="card-title"><h2 data-i18n="strengths_weaknesses">Strengths / Weaknesses</h2></div><div id="teamStrengthWeakness"></div></article>
+      </div>
+    </section>
+
+    <section id="match-view" class="workspace-view">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="match_explorer">Match Explorer</p><h2 data-i18n="match_view_title">Understand one match</h2></div>
+        <label class="inline-select"><span data-i18n="select_match">Select match</span><select id="matchSelect"></select></label>
+      </div>
+      <div class="match-view-grid report-section" data-report-section="match_report">
+        <article class="card report-block" data-report-block="match_report"><div class="card-title"><h2 data-i18n="match_explorer">Match Explorer</h2></div><div id="matchExplorer"></div></article>
+        <article class="card report-block" data-report-block="comparison"><div class="card-title"><h2 data-i18n="compare">Compare</h2></div><div id="comparePanel"></div></article>
+        <article class="card report-block" data-report-block="match_player_physical"><div class="card-title"><h2 data-i18n="match_player_physical">Match Player Physical</h2></div><div id="matchPlayerPhysical"></div></article>
+        <article class="card report-block" data-report-block="match_insights"><div class="card-title"><h2 data-i18n="key_insights">Key Insights</h2></div><div id="matchInsights"></div></article>
+      </div>
+    </section>
+
+    <section id="player-view" class="workspace-view">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="player_explorer">Player Explorer</p><h2 data-i18n="player_view_title">Understand squad and player differences</h2></div>
+        <div class="view-controls">
+          <label class="inline-select"><span data-i18n="filter">Filter</span><select id="playerStatusFilter"><option value="all" data-i18n="all">All</option><option value="confirmed" data-i18n="confirmed">Confirmed</option><option value="provisional" data-i18n="provisional">Provisional</option><option value="needs_review" data-i18n="needs_review">Needs Review</option></select></label>
+          <label class="inline-select"><span data-i18n="select_player">Select player</span><select id="playerSelect"></select></label>
+        </div>
+      </div>
+      <div class="player-view-grid report-section" data-report-section="player_report">
+        <article class="card report-block player-profile-card" data-report-block="player_profile"><div class="card-title"><h2 data-i18n="player_profile">Player Profile</h2></div><div id="playerProfile"></div></article>
+        <article class="card report-block player-table-card" data-report-block="player_comparison"><div class="card-title"><h2><span data-i18n="player_comparison">Player Comparison</span> <small>(Physical)</small></h2></div><div id="playerComparison"></div></article>
+        <article class="card report-block" data-report-block="player_match_log"><div class="card-title"><h2 data-i18n="player_match_log">Player Match Physical</h2></div><div id="playerMatchLog"></div></article>
+        <article class="card report-block" data-report-block="match_variation"><div class="card-title"><h2 data-i18n="match_variation">Match-to-Match Variation</h2></div><div id="playerVariation"></div></article>
+      </div>
+    </section>
+
+    <section id="metric-view" class="workspace-view">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="metric_explorer">Metric Explorer</p><h2 data-i18n="metric_view_title">Understand one metric</h2></div>
+        <label class="inline-select"><span data-i18n="select_metric">Select metric</span><select id="metricSelect"></select></label>
+      </div>
+      <div class="metric-view-grid report-section" data-report-section="metric_report">
+        <article class="card report-block" data-report-block="metric_definition"><div class="card-title"><h2 data-i18n="definition">Definition</h2></div><div id="metricDefinitionPanel"></div></article>
+        <article class="card report-block" data-report-block="metric_benchmarks"><div class="card-title"><h2 data-i18n="team_benchmark">Benchmark</h2></div><div id="metricBenchmarkPanel"></div></article>
+        <article class="card report-block" data-report-block="metric_distribution"><div class="card-title"><h2 data-i18n="metric_distribution">Metric Distribution</h2></div><canvas id="distributionCanvas" width="560" height="320"></canvas></article>
+        <article class="card report-block" data-report-block="top_bottom_teams"><div class="card-title"><h2 data-i18n="top_bottom_teams">Top / Bottom Teams</h2></div><div id="metricTeamsPanel"></div></article>
+        <article class="card report-block" data-report-block="correlation"><div class="card-title"><h2><span data-i18n="correlation">Correlation</span></h2><strong id="correlationValue">r = n/a</strong></div><div id="correlationPanel"></div></article>
+        <article class="card report-block" data-report-block="metric_caution"><div class="card-title"><h2 data-i18n="interpretation_notes">Interpretation Notes</h2></div><div id="metricCautionPanel"></div></article>
+      </div>
+    </section>
+
+    <section id="knowledge-view" class="workspace-view">
+      <div class="view-header">
+        <div><p class="view-kicker" data-i18n="knowledge_base">Knowledge Base</p><h2 data-i18n="knowledge_view_title">Read deeper interpretation only when needed</h2></div>
+      </div>
+      <div class="knowledge-view-grid report-section" data-report-section="knowledge_report">
+        <article class="card report-block" data-report-block="knowledge_summary"><div class="card-title"><h2 data-i18n="knowledge_base">Knowledge Base</h2></div><div id="knowledgePanel"></div></article>
+        <article class="card report-block" data-report-block="data_dictionary"><div class="card-title"><h2 data-i18n="data_dictionary">Data Dictionary</h2></div><div id="dictionaryPanel"></div></article>
+        <article class="card report-block" data-report-block="data_source_status"><div class="card-title"><h2 data-i18n="data_source_status">Data Source Status</h2></div><div id="dataSourceStatusPanel"></div></article>
+        <article class="card report-block" data-report-block="reports"><div class="card-title"><h2 data-i18n="reports">Reports</h2></div><div class="empty">outputs/report/index.html</div></article>
+        <article class="card report-block" data-report-block="settings"><div class="card-title"><h2 data-i18n="settings">Settings</h2></div><div class="empty" data-i18n="interpretation_second">Interpretation second</div></article>
+      </div>
+    </section>
+  </main>
+
+  <script src="data/workspace_i18n.js?v=20260705002952"></script>
+  <script src="data/workspace_data.js?v=20260705002952"></script>
+  <script src="data/workspace_flags.js?v=20260705002952"></script>
+  <script src="assets/workspace.js?v=20260705002952"></script>
+</body>
+</html>
