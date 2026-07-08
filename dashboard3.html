@@ -64,6 +64,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pl-btn .pos-badge{font-size:.62rem;padding:1px 5px;border-radius:3px;margin-left:4px;background:var(--card);color:var(--muted)}
 
 /* ACWR */
+
+/* ACWR PLAYER DETAIL */
+.acwr-pl-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.acwr-pl-btn{background:var(--card2);border:2px solid var(--border);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:.78rem;font-weight:700;color:var(--muted);transition:all .12s}
+.acwr-pl-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(15,118,110,.08)}
+.acwr-hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:16px}
+.acwr-hist-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center}
+.acwr-hist-card .acwr-r{font-size:.65rem;color:var(--muted);font-weight:700;margin-bottom:4px}
+.acwr-hist-card .acwr-d{font-size:.85rem;font-weight:900}
+.acwr-hist-card .acwr-v{font-size:.78rem;font-weight:800;margin-top:2px}
+.acwr-hist-card.ok{border-top:3px solid var(--ok)}
+.acwr-hist-card.caution{border-top:3px solid var(--caution)}
+.acwr-hist-card.danger{border-top:3px solid var(--danger)}
+.acwr-hist-card.low{border-top:3px solid var(--low)}
+.acwr-hist-card.nodata{opacity:.4}
+
 .acwr-table{border-collapse:collapse;width:100%;font-size:.8rem}
 .acwr-table th{color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 10px;border-bottom:1px solid var(--border);text-align:center}
 .acwr-table th:first-child{text-align:left}
@@ -259,6 +275,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 
   <!-- TAB 4: 피지컬 프로필 -->
+  
+    <div class="sec">
+      <div class="stitle">선수별 ACWR 경기 히스토리</div>
+      <div class="card">
+        <div class="acwr-pl-btns" id="acwr-pl-btns"></div>
+        <div class="acwr-hist-grid" id="acwr-hist-grid"></div>
+        <svg id="acwr-hist-chart" viewBox="0 0 760 200" style="width:100%;display:block;margin-top:8px"></svg>
+      </div>
+    </div>
+
   <div id="pane-profile" class="tab-pane">
     <div class="sec">
       <div class="stitle">포지션별 평균 피지컬 레이더</div>
@@ -779,6 +805,8 @@ function renderLoad(){
     svg.innerHTML=html;
   }
 
+  renderACWRPlayerBtns();
+
   // Load insights
   const danger=acwrData.filter(p=>p.acwr&&p.acwr>=1.5);
   const caution=acwrData.filter(p=>p.acwr&&p.acwr>=1.3&&p.acwr<1.5);
@@ -794,6 +822,153 @@ function renderLoad(){
     const c=document.createElement('div');c.className='ins';
     c.innerHTML=`<span class="tag ${ins.tag}">${ins.t}</span><p>${ins.body}</p>`;
     igrid.appendChild(c);
+  });
+}
+
+
+// ── ACWR PLAYER HISTORY ───────────────────────────────────
+function renderACWRPlayerHistory(name){
+  const pdata=BY_PLAYER[name];
+  if(!pdata)return;
+  const grid=document.getElementById('acwr-hist-grid');
+  const svg=document.getElementById('acwr-hist-chart');
+  grid.innerHTML='';svg.innerHTML='';
+
+  const rounds=ROUNDS_ORDER;
+  const distByRound=rounds.map(r=>pdata.rounds[r]?.dist||null);
+
+  // Compute per-round ACWR
+  const entries=rounds.map((r,i)=>{
+    const dist=distByRound[i];
+    if(dist==null) return {r,dist:null,acute:null,chronic:null,acwr:null};
+    const prev=distByRound.slice(0,i).filter(v=>v!=null).slice(-4);
+    const chronic=prev.length?avg(prev):null;
+    const acwr=chronic?dist/chronic:null;
+    return {r,dist,acute:dist,chronic,acwr};
+  });
+
+  // Cards
+  entries.forEach(e=>{
+    const card=document.createElement('div');
+    let cls='acwr-hist-card';
+    let acwrTxt='—'; let distTxt='—'; let col='var(--muted)';
+    if(e.dist!=null){
+      distTxt=fmtK(e.dist);
+      if(e.acwr!=null){
+        acwrTxt=e.acwr.toFixed(2);
+        if(e.acwr>=1.5){cls+=' danger';col='#f87171';}
+        else if(e.acwr>=1.3){cls+=' caution';col='#fbbf24';}
+        else if(e.acwr<0.8){cls+=' low';col='#60a5fa';}
+        else{cls+=' ok';col='#06d6a0';}
+      } else { cls+=' ok'; }
+    } else { cls+=' nodata'; }
+    card.className=cls;
+    card.innerHTML=`<div class="acwr-r">${e.r}</div><div class="acwr-d">${distTxt}</div><div class="acwr-v" style="color:${col}">${e.acwr!=null?'ACWR '+acwrTxt:e.dist!=null?'첫경기':'-'}</div>`;
+    grid.appendChild(card);
+  });
+
+  // Mini line chart
+  const W=760,H=200,pd={t:16,r:16,b:48,l:48};
+  const cw=W-pd.l-pd.r,ch=H-pd.t-pd.b;
+  const played=entries.filter(e=>e.dist!=null);
+  if(played.length<2){svg.innerHTML='<text x="380" y="100" text-anchor="middle" fill="#94a3b8" font-size="13">출전 데이터 부족</text>';return;}
+  const distMax=Math.max(...played.map(e=>e.dist))*1.1;
+  let html='';
+
+  // Grid lines dist
+  [0,4000,8000,12000].forEach(v=>{
+    if(v>distMax)return;
+    const y=pd.t+ch-ch*v/distMax;
+    html+=`<line x1="${pd.l}" y1="${y.toFixed(0)}" x2="${W-pd.r}" y2="${y.toFixed(0)}" stroke="#e2e8f0" stroke-width=".5"/>`;
+    html+=`<text x="${pd.l-4}" y="${(y+4).toFixed(0)}" font-size="9" fill="#94a3b8" text-anchor="end">${(v/1000).toFixed(0)}k</text>`;
+  });
+
+  // ACWR zones (right axis bg) - subtle
+  const acwrMax=2.0;
+  // safe zone band 0.8-1.3
+  const y13=pd.t+ch-ch*(1.3/acwrMax*ch/ch);// placeholder
+  // draw bars + points
+  const n=rounds.length;
+  const step=cw/(n-1||1);
+  let distPts=[],acwrPts=[];
+
+  entries.forEach((e,i)=>{
+    const x=pd.l+i*step;
+    if(e.dist!=null){
+      const y=pd.t+ch-ch*e.dist/distMax;
+      distPts.push([x,y]);
+      // bar
+      const bh=ch*e.dist/distMax;
+      html+=`<rect x="${(x-8).toFixed(1)}" y="${y.toFixed(1)}" width="16" height="${bh.toFixed(1)}" fill="#e2e8f0" opacity=".5" rx="2"/>`;
+    }
+    if(e.acwr!=null){
+      const col=e.acwr>=1.5?'#f87171':e.acwr>=1.3?'#fbbf24':e.acwr<0.8?'#60a5fa':'#06d6a0';
+      // acwr on secondary scale mapped to chart height (0=bottom,2=top)
+      const ay=pd.t+ch-ch*Math.min(e.acwr,2)/2;
+      acwrPts.push([x,ay,col,e.acwr]);
+    }
+  });
+
+  // dist line
+  if(distPts.length>1){
+    const d='M'+distPts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+    html+=`<path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  }
+  // acwr line
+  if(acwrPts.length>1){
+    const d='M'+acwrPts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+    html+=`<path d="${d}" fill="none" stroke="#06d6a0" stroke-width="2"/>`;
+  }
+  // danger zone line
+  const dz=pd.t+ch-ch*1.5/2;
+  const cz=pd.t+ch-ch*1.3/2;
+  const oz=pd.t+ch-ch*0.8/2;
+  html+=`<line x1="${pd.l}" y1="${dz.toFixed(0)}" x2="${W-pd.r}" y2="${dz.toFixed(0)}" stroke="#f87171" stroke-width="1" stroke-dasharray="3,3" opacity=".6"/>`;
+  html+=`<text x="${(W-pd.r+2).toFixed(0)}" y="${(dz+4).toFixed(0)}" font-size="8" fill="#f87171">1.5</text>`;
+  html+=`<line x1="${pd.l}" y1="${cz.toFixed(0)}" x2="${W-pd.r}" y2="${cz.toFixed(0)}" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,3" opacity=".5"/>`;
+  html+=`<text x="${(W-pd.r+2).toFixed(0)}" y="${(cz+4).toFixed(0)}" font-size="8" fill="#fbbf24">1.3</text>`;
+  html+=`<line x1="${pd.l}" y1="${oz.toFixed(0)}" x2="${W-pd.r}" y2="${oz.toFixed(0)}" stroke="#60a5fa" stroke-width="1" stroke-dasharray="3,3" opacity=".5"/>`;
+  html+=`<text x="${(W-pd.r+2).toFixed(0)}" y="${(oz+4).toFixed(0)}" font-size="8" fill="#60a5fa">0.8</text>`;
+
+  // dots + labels
+  acwrPts.forEach(([x,y,col,val])=>{
+    html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
+    html+=`<text x="${x.toFixed(1)}" y="${(y-8).toFixed(0)}" font-size="9" font-weight="700" fill="${col}" text-anchor="middle">${val.toFixed(2)}</text>`;
+  });
+
+  // x labels
+  entries.forEach((e,i)=>{
+    const x=pd.l+i*step;
+    const col=e.dist!=null?'#475569':'#cbd5e1';
+    html+=`<text x="${x.toFixed(1)}" y="${(H-8).toFixed(0)}" font-size="9" fill="${col}" text-anchor="middle" font-weight="${e.dist!=null?'700':'400'}">${e.r}</text>`;
+  });
+
+  // axis label
+  html+=`<text x="${(pd.l-34).toFixed(0)}" y="${(pd.t+ch/2).toFixed(0)}" font-size="9" fill="#94a3b8" text-anchor="middle" transform="rotate(-90,${(pd.l-34).toFixed(0)},${(pd.t+ch/2).toFixed(0)})">이동거리(m)</text>`;
+  html+=`<text x="${(W-2).toFixed(0)}" y="${(pd.t+ch/2).toFixed(0)}" font-size="9" fill="#94a3b8" text-anchor="middle" transform="rotate(90,${(W-2).toFixed(0)},${(pd.t+ch/2).toFixed(0)})">ACWR</text>`;
+
+  svg.innerHTML=html;
+}
+
+function renderACWRPlayerBtns(){
+  const btns=document.getElementById('acwr-pl-btns');
+  btns.innerHTML='';
+  const players=Object.entries(BY_PLAYER)
+    .filter(([,p])=>Object.keys(p.rounds).length>=2)
+    .sort((a,b)=>a[0].localeCompare(b[0],'ko'));
+  let first=true;
+  players.forEach(([name,pdata])=>{
+    const b=document.createElement('button');
+    b.className='acwr-pl-btn'+(first?' active':'');
+    const posCol=POS_COLORS[pdata.pos]||'#64748b';
+    b.innerHTML=`${name}<span class="pl-btn .pos-badge" style="font-size:.62rem;padding:1px 5px;border-radius:3px;margin-left:4px;background:var(--card);color:${posCol}">${pdata.pos}</span>`;
+    b.onclick=()=>{
+      btns.querySelectorAll('.acwr-pl-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderACWRPlayerHistory(name);
+    };
+    btns.appendChild(b);
+    if(first){renderACWRPlayerHistory(name);first=false;}
   });
 }
 
@@ -1196,5 +1371,7 @@ renderLoad();
 renderProfile();
 renderResultTab();
 </script>
+
+<footer style="text-align:center;padding:20px;font-size:.72rem;color:var(--muted)">© 2025 Taewook Eom. All rights reserved.</footer>
 </body>
 </html>
